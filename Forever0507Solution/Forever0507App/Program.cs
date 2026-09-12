@@ -12,14 +12,13 @@ builder.Services.Configure<EventOptions>(builder.Configuration.GetSection(EventO
 builder.Services.AddSingleton(sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<EventOptions>>().Value);
 
 builder.Services.AddDbContext<AlumniDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 var app = builder.Build();
 
-// Demo site: create the SQLite database straight from the model (no migrations).
+// Demo site: create the database straight from the model (no migrations).
 using (var scope = app.Services.CreateScope())
 {
-    Directory.CreateDirectory(Path.Combine(app.Environment.ContentRootPath, "App_Data"));
     var db = scope.ServiceProvider.GetRequiredService<AlumniDbContext>();
     db.Database.EnsureCreated();
 }
