@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Forever0507App.Services;
 
 namespace Forever0507App.Models;
 
@@ -9,47 +8,49 @@ public class Registration
 {
     public int Id { get; set; }
 
-    /// <summary>REG-2027-#### — derived from the identity Id after the first save.</summary>
+    /// <summary>REG-2026-#### — derived from the identity Id after the first save.</summary>
     [MaxLength(20)]
     public string RegistrationNo { get; set; } = "";
 
     [MaxLength(120)]
     public string FullName { get; set; } = "";
 
-    /// <summary>11-digit BD mobile number; secondary lookup key for the card page.</summary>
+    /// <summary>One of Bangladesh's 64 districts (see Helpers.BdDistricts).</summary>
+    [MaxLength(40)]
+    public string District { get; set; } = "";
+
+    /// <summary>School as chosen from the dropdown or typed in the "other" box.</summary>
+    [MaxLength(160)]
+    public string SchoolName { get; set; } = "";
+
+    /// <summary>Fixed for this cohort (2005).</summary>
+    public int SscYear { get; set; }
+
+    /// <summary>বিকাশ / নগদ / রকেট (see Helpers.PaymentMedium).</summary>
+    [MaxLength(20)]
+    public string PaymentMedium { get; set; } = "";
+
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal Amount { get; set; }
+
+    /// <summary>Amount + service charge (2%), rounded up to whole taka.</summary>
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal PayableAmount { get; set; }
+
+    /// <summary>Mobile-banking transaction id supplied by the registrant.</summary>
+    [MaxLength(30)]
+    public string TransactionId { get; set; } = "";
+
+    /// <summary>S / M / L / XL / XXL (see Helpers.JerseySize).</summary>
+    [MaxLength(5)]
+    public string JerseySize { get; set; } = "";
+
+    /// <summary>11-digit BD mobile number; lookup key for the card page.</summary>
     [MaxLength(11)]
     public string Phone { get; set; } = "";
 
-    [MaxLength(150)]
-    public string? Email { get; set; }
-
-    [MaxLength(120)]
-    public string? Occupation { get; set; }
-
-    [MaxLength(200)]
-    public string? PresentAddress { get; set; }
-
-    public int BatchYear { get; set; }
-
-    /// <summary>Spouse / adult family members joining (each adds a fee).</summary>
-    public int ExtraMembers { get; set; }
-
-    /// <summary>Children under 5 (free, capped at 2 by validation).</summary>
-    public int ChildrenUnder5 { get; set; }
-
-    [MaxLength(400)]
-    public string? Note { get; set; }
-
-    [Column(TypeName = "decimal(10,2)")]
-    public decimal FeeAmount { get; set; }
-
-    public string PaymentStatus { get; set; } = "অপরিশোধিত";
+    /// <summary>Committee verifies the transaction after registration.</summary>
+    public string PaymentStatus { get; set; } = "যাচাই অপেক্ষমান";
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    [NotMapped]
-    public bool IsSeniorBatch => BatchYear <= FeeCalculator.SeniorBatchCutoffYear;
-
-    [NotMapped]
-    public int TotalAttendees => 1 + ExtraMembers + ChildrenUnder5;
 }

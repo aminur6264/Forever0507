@@ -6,7 +6,7 @@
 <div class="page-hero">
     <div class="container">
         <h1 class="page-hero__title h2 mb-1">রেজিস্ট্রেশন ফর্ম</h1>
-        <p class="page-hero__sub mb-0">@Event.EventName · @Event.StartTimeBn</p>
+        <p class="page-hero__sub mb-0">@Event.EventName · @Event.StartTimeBn, @Event.StartTimeOnlyBn</p>
     </div>
 </div>
 
@@ -15,10 +15,21 @@
         <div class="row justify-content-center">
             <div class="col-lg-9">
                 <div class="form-panel">
+                    <div class="alert alert-warning border-0 rounded-4 mb-4" role="alert">
+                        💳 <strong>পেমেন্ট আগে, ফর্ম পরে:</strong> নিচের যেকোনো নম্বরে অন্তত
+                        @BengaliText.Taka(FeeCalculator.MinAmount) পাঠান (প্রদেয় = মূল + ২%),
+                        তারপর ফর্মে ট্রানজেকশনের তথ্য দিন।
+                        <ul class="mb-0 mt-2 ps-3">
+                            @foreach (var account in Event.PaymentAccounts)
+                            {
+                                <li>@account</li>
+                            }
+                        </ul>
+                    </div>
+
                     <form asp-controller="Registration" asp-action="Register" method="post" novalidate>
                         <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-                        <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">আপনার তথ্য</h2>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label asp-for="FullName" class="form-label"></label>
@@ -26,56 +37,93 @@
                                 <span asp-validation-for="FullName" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6">
+                                <label asp-for="District" class="form-label"></label>
+                                <select asp-for="District" class="form-select">
+                                    <option value="">— জেলা নির্বাচন করুন —</option>
+                                    @foreach (var district in (string[])ViewBag.Districts!)
+                                    {
+                                        <option value="@district">@district</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="District" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="SchoolChoice" class="form-label"></label>
+                                <select asp-for="SchoolChoice" class="form-select" id="SchoolChoice">
+                                    <option value="">— স্কুল নির্বাচন করুন —</option>
+                                    @foreach (var school in (List<string>)ViewBag.Schools!)
+                                    {
+                                        <option value="@school">@school</option>
+                                    }
+                                    <option value="@RegistrationInputModel.OtherSchoolValue">অন্যান্য (নিজের স্কুলের নাম লিখুন)</option>
+                                </select>
+                                <span asp-validation-for="SchoolChoice" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 d-none" id="otherSchoolWrap">
+                                <label asp-for="OtherSchoolName" class="form-label"></label>
+                                <input asp-for="OtherSchoolName" class="form-control" id="OtherSchoolName"
+                                       placeholder="যেমন: টাঙ্গাইল জিলা স্কুল" />
+                                <span asp-validation-for="OtherSchoolName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="SscYear">৪. এসএসসি সাল</label>
+                                <input type="text" id="SscYear" class="form-control" value="@BengaliText.ToBengaliDigits(Event.SscYear)"
+                                       readonly tabindex="-1" aria-readonly="true" />
+                                <div class="form-text">এই আয়োজন শুধু @BengaliText.ToBengaliDigits(Event.SscYear) সালের এসএসসি ব্যাচের জন্য।</div>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="PaymentMedium" class="form-label d-block"></label>
+                                <div class="d-flex gap-3 flex-wrap">
+                                    @foreach (var medium in (string[])ViewBag.PaymentMediums!)
+                                    {
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" asp-for="PaymentMedium" value="@medium" id="pm-@medium" />
+                                            <label class="form-check-label" for="pm-@medium">@medium</label>
+                                        </div>
+                                    }
+                                </div>
+                                <span asp-validation-for="PaymentMedium" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="AmountText" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="AmountText" class="form-control" inputmode="decimal" id="AmountText" placeholder="যেমন: 1500" />
+                                    <span class="input-group-text">টাকা</span>
+                                </div>
+                                <span asp-validation-for="AmountText" class="text-danger small"></span>
+                                <div class="form-text">সর্বনিম্ন @BengaliText.Taka(FeeCalculator.MinAmount), শুধু সংখ্যা।</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="payablePreview">প্রদেয় পরিমাণ (মূল + ২%)</label>
+                                <div class="form-control bg-body-tertiary fw-semibold" id="payablePreview" aria-live="polite">—</div>
+                                <div class="form-text">এই পরিমাণটাই মোবাইল ব্যাংকিংয়ে পাঠাতে হবে।</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="TransactionId" class="form-label"></label>
+                                <input asp-for="TransactionId" class="form-control" placeholder="যেমন: 9HT7K2XPLM" />
+                                <span asp-validation-for="TransactionId" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
                                 <label asp-for="Phone" class="form-label"></label>
                                 <input asp-for="Phone" class="form-control" inputmode="numeric" maxlength="11" placeholder="01712345678" />
                                 <span asp-validation-for="Phone" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="BatchYear" class="form-label"></label>
-                                <input asp-for="BatchYear" class="form-control" type="number" min="1960" max="2026" placeholder="যেমন: ২০১৫" />
-                                <span asp-validation-for="BatchYear" class="text-danger small"></span>
-                                <div class="form-text">যে বছর ১০ম শ্রেণিতে (এসএসসি) পাস করেছেন অথবা শেষ ছিলেন।</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="Email" class="form-label"></label>
-                                <input asp-for="Email" class="form-control" placeholder="you@example.com" />
-                                <span asp-validation-for="Email" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="Occupation" class="form-label"></label>
-                                <input asp-for="Occupation" class="form-control" placeholder="যেমন: শিক্ষক, ডাক্তার, ব্যবসায়ী" />
-                                <span asp-validation-for="Occupation" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="PresentAddress" class="form-label"></label>
-                                <input asp-for="PresentAddress" class="form-control" placeholder="শহর/জেলা" />
-                                <span asp-validation-for="PresentAddress" class="text-danger small"></span>
-                            </div>
-                        </div>
-
-                        <h2 class="h5 fw-bold mt-4 mb-3" style="color: var(--brand-deep);">সঙ্গী/পরিবার</h2>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label asp-for="ExtraMembers" class="form-label"></label>
-                                <input asp-for="ExtraMembers" class="form-control" type="number" min="0" max="5" value="0" />
-                                <span asp-validation-for="ExtraMembers" class="text-danger small"></span>
-                                <div class="form-text">প্রতি জন পূর্ণবয়স্ক সদস্যের ফি @BengaliText.Taka(FeeCalculator.PerExtraMemberFee)।</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="ChildrenUnder5" class="form-label"></label>
-                                <input asp-for="ChildrenUnder5" class="form-control" type="number" min="0" max="2" value="0" />
-                                <span asp-validation-for="ChildrenUnder5" class="text-danger small"></span>
-                                <div class="form-text">৫ বছরের কম বয়সী শিশুদের জন্য কোনো ফি নেই (সর্বোচ্চ ২ জন)।</div>
+                                <div class="form-text">এই নম্বরেই পেমেন্ট করা ভালো — যাচাইয়ে কাজে লাগবে।</div>
                             </div>
                             <div class="col-12">
-                                <label asp-for="Note" class="form-label"></label>
-                                <textarea asp-for="Note" class="form-control" rows="3" placeholder="চাইলে কয়েক লাইনে আপনার স্মৃতিচারণ লিখে রাখুন…"></textarea>
-                                <span asp-validation-for="Note" class="text-danger small"></span>
+                                <label asp-for="JerseySize" class="form-label d-block"></label>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @foreach (var (value, label) in ( (string, string)[] )ViewBag.JerseySizes!)
+                                    {
+                                        <input type="radio" class="btn-check" asp-for="JerseySize" value="@value" id="js-@value" autocomplete="off" />
+                                        <label class="btn btn-outline-green" for="js-@value">@label</label>
+                                    }
+                                </div>
+                                <span asp-validation-for="JerseySize" class="text-danger small"></span>
                             </div>
                         </div>
 
                         <div class="fee-estimate mt-4">
-                            সম্ভাব্য অংশগ্রহণ ফি: <strong id="feeEstimate">—</strong>
+                            প্রদেয় পরিমাণ (মূল + ২%): <strong id="feeEstimate">—</strong>
                             <div class="small" style="color: rgba(255,255,255,.7);">@Event.PayNote</div>
                         </div>
 

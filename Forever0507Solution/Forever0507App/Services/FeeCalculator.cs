@@ -1,22 +1,16 @@
-using Forever0507App.Models;
-
 namespace Forever0507App.Services;
 
-/// <summary>Single source of truth for participation fees. The client-side estimator only mirrors this.</summary>
+/// <summary>Single source of truth for the contribution rules. The client-side estimator only mirrors this.</summary>
 public static class FeeCalculator
 {
-    public const int SeniorBatchCutoffYear = 2019; // ≤ 2019 → senior fee
-    public const int SeniorFee = 1000;
-    public const int JuniorFee = 500;              // 2020–2026
-    public const int PerExtraMemberFee = 500;
-    public const int MaxChildrenUnder5Free = 2;    // enforced by validation; children are free
+    /// <summary>Minimum main amount a registrant contributes.</summary>
+    public const decimal MinAmount = 1000;
+    public const decimal MaxAmount = 1_000_000;
 
-    public static int Calculate(int batchYear, int extraMembers, int childrenUnder5 = 0)
-    {
-        var baseFee = batchYear <= SeniorBatchCutoffYear ? SeniorFee : JuniorFee;
-        return baseFee + Math.Max(0, extraMembers) * PerExtraMemberFee;
-    }
+    /// <summary>Mobile-banking service charge added on top of the main amount (2%).</summary>
+    public const decimal ServiceChargePercent = 2m;
 
-    public static int Calculate(RegistrationInputModel model)
-        => Calculate(model.BatchYear, model.ExtraMembers, model.ChildrenUnder5);
+    /// <summary>Payable = main amount + 2%, rounded up to whole taka (e.g. 1000 → 1020).</summary>
+    public static decimal CalculatePayable(decimal amount)
+        => Math.Ceiling(amount * (1 + ServiceChargePercent / 100m));
 }

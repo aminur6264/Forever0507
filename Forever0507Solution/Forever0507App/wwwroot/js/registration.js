@@ -1,13 +1,7 @@
-// Live participation-fee estimate. Mirrors Services.FeeCalculator — the server value is authoritative.
+// Live payable-amount estimate (main + 2%) and the "other school" toggle.
+// Mirrors Services.FeeCalculator — the server value is authoritative.
 (function () {
     'use strict';
-
-    var out = document.getElementById('feeEstimate');
-    if (!out) return;
-
-    var batch = document.getElementById('BatchYear');
-    var extra = document.getElementById('ExtraMembers');
-    var children = document.getElementById('ChildrenUnder5');
 
     var BN = '০১২৩৪৫৬৭৮৯';
     function bn(value) {
@@ -16,27 +10,47 @@
     function taka(amount) {
         return '৳' + bn(amount.toLocaleString('en-IN'));
     }
-    function num(el) {
-        var n = parseInt(el && el.value, 10);
-        return isNaN(n) || n < 0 ? 0 : n;
-    }
 
-    function update() {
-        var year = num(batch);
-        if (year < 1960 || year > 2026) {
-            out.textContent = '—';
+    // ---- payable amount = main + 2% (rounded up) ----
+    var amount = document.getElementById('AmountText');
+    var payablePreview = document.getElementById('payablePreview');
+    var feeEstimate = document.getElementById('feeEstimate');
+
+    function updatePayable() {
+        var raw = (amount && amount.value ? amount.value : '').trim();
+        var value = parseFloat(raw);
+        if (!/^\d+(\.\d{1,2})?$/.test(raw) || isNaN(value) || value < 1000) {
+            if (payablePreview) payablePreview.textContent = '—';
+            if (feeEstimate) feeEstimate.textContent = '—';
             return;
         }
-        var extraMembers = Math.min(num(extra), 5);
-        var fee = (year <= 2019 ? 1000 : 500) + extraMembers * 500;
-        out.textContent = taka(fee);
+        var payable = Math.ceil(value * 1.02);
+        if (payablePreview) payablePreview.textContent = taka(payable);
+        if (feeEstimate) feeEstimate.textContent = taka(payable);
     }
 
-    ['input', 'change'].forEach(function (evt) {
-        [batch, extra, children].forEach(function (el) {
-            if (el) el.addEventListener(evt, update);
-        });
-    });
+    if (amount) {
+        amount.addEventListener('input', updatePayable);
+        amount.addEventListener('change', updatePayable);
+        updatePayable();
+    }
 
-    update();
+    // ---- school dropdown: reveal a text box for "other" ----
+    var OTHER = '__OTHER__';
+    var schoolChoice = document.getElementById('SchoolChoice');
+    var otherWrap = document.getElementById('otherSchoolWrap');
+    var otherName = document.getElementById('OtherSchoolName');
+
+    function toggleOther() {
+        if (!schoolChoice || !otherWrap) return;
+        var isOther = schoolChoice.value === OTHER;
+        otherWrap.classList.toggle('d-none', !isOther);
+        if (otherName) otherName.disabled = !isOther;
+        if (isOther && otherName) otherName.focus();
+    }
+
+    if (schoolChoice) {
+        schoolChoice.addEventListener('change', toggleOther);
+        toggleOther();
+    }
 })();

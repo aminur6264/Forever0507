@@ -5,7 +5,7 @@
 <div class="page-hero">
     <div class="container">
         <h1 class="page-hero__title h2 mb-1">রেজিস্ট্রেশন কার্ড</h1>
-        <p class="page-hero__sub mb-0">নিবন্ধন নম্বর অথবা মোবাইল নম্বর দিয়ে আপনার কার্ড খুঁজে নিন।</p>
+        <p class="page-hero__sub mb-0">নিবন্ধন নম্বর, মোবাইল নম্বর অথবা ট্রানজেকশন আইডি দিয়ে আপনার কার্ড খুঁজে নিন।</p>
     </div>
 </div>
 
@@ -21,13 +21,13 @@
                         </div>
                     }
                     <form asp-controller="Registration" asp-action="Card" method="get">
-                        <label for="q" class="form-label fw-semibold">রেজিস্ট্রেশন নম্বর অথবা মোবাইল নম্বর</label>
+                        <label for="q" class="form-label fw-semibold">রেজিস্ট্রেশন নম্বর / মোবাইল / ট্রানজেকশন আইডি</label>
                         <div class="input-group input-group-lg">
-                            <input type="text" id="q" name="q" class="form-control" placeholder="REG-2027-0001 অথবা 01712345678" />
+                            <input type="text" id="q" name="q" class="form-control" placeholder="REG-2026-0001 · 01712345678 · 9HT7K2XPLM" />
                             <button type="submit" class="btn btn-green">খুঁজুন</button>
                         </div>
                         <div class="form-text mt-2">
-                            রেজিস্ট্রেশন নম্বর হারিয়ে ফেললে রেজিস্ট্রেশনের সময় দেওয়া মোবাইল নম্বর দিয়ে খুঁজুন।
+                            রেজিস্ট্রেশন নম্বর হারিয়ে ফেললে রেজিস্ট্রেশনের সময় দেওয়া মোবাইল নম্বর বা ট্রানজেকশন আইডি দিয়ে খুঁজুন।
                         </div>
                     </form>
                 </div>

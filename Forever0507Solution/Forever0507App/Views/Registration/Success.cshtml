@@ -22,23 +22,28 @@
                     </div>
 
                     <dl class="row text-start mb-4">
-                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">পাসের সন</dt>
-                        <dd class="col-7 col-sm-8 fw-semibold">@BengaliText.ToBengaliDigits(Model.BatchYear) ব্যাচ</dd>
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">জেলা · স্কুল</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">@Model.District · @Model.SchoolName</dd>
 
-                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">সঙ্গী ও পরিবার</dt>
-                        <dd class="col-7 col-sm-8 fw-semibold">
-                            @BengaliText.ToBengaliDigits(Model.ExtraMembers) জন পূর্ণবয়স্ক,
-                            @BengaliText.ToBengaliDigits(Model.ChildrenUnder5) জন শিশু (৫ বছরের কম)
-                        </dd>
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">ট্রানজেকশন</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">@Model.PaymentMedium · @Model.TransactionId</dd>
 
-                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">সর্বমোট ফি</dt>
-                        <dd class="col-7 col-sm-8 fw-semibold">@BengaliText.Taka(Model.FeeAmount)</dd>
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">মূল পরিমাণ</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">@BengaliText.Taka(Model.Amount)</dd>
+
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">প্রদেয় (মূল + ২%)</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">@BengaliText.Taka(Model.PayableAmount)</dd>
+
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">জার্সি সাইজ</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">@JerseySize.LabelOf(Model.JerseySize)</dd>
 
                         <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">অনুষ্ঠান</dt>
                         <dd class="col-7 col-sm-8 fw-semibold">@Event.StartTimeBn, @Event.StartTimeOnlyBn — @Event.Venue</dd>
                     </dl>
 
-                    <p class="small mb-4" style="color: var(--brand-muted);">@Event.PayNote</p>
+                    <p class="small mb-4" style="color: var(--brand-muted);">
+                        @Event.PayNote যাচাই শেষে কার্ডের অবস্থা হবে <strong>নিশ্চিত</strong>।
+                    </p>
 
                     <div class="d-flex gap-3 justify-content-center flex-wrap">
                         <a class="btn btn-green btn-lg px-4" asp-action="Card" asp-route-id="@Model.RegistrationNo">কার্ড দেখুন ও প্রিন্ট করুন</a>

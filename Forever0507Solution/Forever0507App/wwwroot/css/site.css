@@ -89,6 +89,24 @@ a {
   font-weight: 600;
 }
 
+.btn-outline-green {
+  --bs-btn-color: var(--brand-green);
+  --bs-btn-border-color: var(--brand-green);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--brand-green);
+  --bs-btn-hover-border-color: var(--brand-green);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--brand-deep);
+  --bs-btn-active-border-color: var(--brand-deep);
+  font-weight: 600;
+}
+
+.btn-check:checked + .btn-outline-green {
+  color: #fff;
+  background-color: var(--brand-green);
+  border-color: var(--brand-green);
+}
+
 /* ---------- Navbar ---------- */
 .site-nav {
   background: linear-gradient(90deg, var(--brand-deep) 0%, var(--brand-green) 100%);

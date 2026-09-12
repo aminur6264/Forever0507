@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="@Event.SchoolName — @Event.EventName। @Event.Tagline।" />
-    <title>@ViewData["Title"] - @Event.SchoolName</title>
+    <meta name="description" content="@Event.CommunityName — @Event.EventName। @Event.Tagline।" />
+    <title>@ViewData["Title"] - @Event.CommunityName</title>
     <script type="importmap"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -27,10 +27,10 @@
                         </defs>
                         <circle cx="24" cy="24" r="22" fill="url(#bm-g)" />
                         <circle cx="24" cy="24" r="18.5" fill="none" stroke="#faf7f0" stroke-width="1.5" opacity=".85" />
-                        <text x="24" y="30" text-anchor="middle" font-size="15" fill="#faf7f0" font-family="'Noto Serif Bengali', serif" font-weight="700">রা</text>
+                        <text x="24" y="29" text-anchor="middle" font-size="13" fill="#faf7f0" font-family="'Noto Serif Bengali', serif" font-weight="700">০৫</text>
                     </svg>
                     <span class="brand-text">
-                        <span class="brand-text__name">@Event.SchoolName</span>
+                        <span class="brand-text__name">@Event.CommunityName</span>
                         <small class="brand-text__tag">@Event.Tagline</small>
                     </span>
                 </a>
@@ -41,9 +41,9 @@
                 <div class="navbar-collapse collapse d-lg-flex justify-content-end">
                     <ul class="navbar-nav align-items-lg-center gap-lg-1">
                         <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">হোম</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="about">বিদ্যালয়</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="event">অনুষ্ঠান</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="fees">ফি ও নিয়মাবলি</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="about">ব্যাচ সম্পর্কে</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="event">আয়োজন</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="fees">ফি ও পেমেন্ট</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Registration" asp-action="Card">রেজিস্ট্রেশন কার্ড</a></li>
                         <li class="nav-item ms-lg-2">
                             <a class="btn btn-gold btn-sm px-3" asp-controller="Registration" asp-action="Register">রেজিস্ট্রেশন করুন</a>
@@ -62,18 +62,18 @@
         <div class="container">
             <div class="row g-4">
                 <div class="col-lg-5">
-                    <h3 class="site-footer__title">@Event.SchoolName</h3>
+                    <h3 class="site-footer__title">@Event.CommunityName</h3>
                     <p class="site-footer__tagline">@Event.Tagline — @Event.EventName</p>
                     <p class="site-footer__text">
-                        বিদ্যালয়ের প্রতিটি প্রাক্তন শিক্ষার্থী আমাদের গর্ব। স্মৃতি, বন্ধুত্ব আর কৃতজ্ঞতাকে একসাথে
-                        উদযাপন করতে আমাদের পাশে থাকুন।
+                        @Event.EstablishedNote। স্মৃতি, বন্ধুত্ব আর ভালোবাসাকে একসাথে উদযাপন করতে
+                        সারা দেশের ব্যাচমেটদের পাশে থাকুন।
                     </p>
                 </div>
                 <div class="col-sm-6 col-lg-3">
                     <h4 class="site-footer__heading">দরকারি লিংক</h4>
                     <ul class="site-footer__links">
-                        <li><a asp-controller="Home" asp-action="Index" asp-fragment="about">আমাদের বিদ্যালয়</a></li>
-                        <li><a asp-controller="Home" asp-action="Index" asp-fragment="fees">নিবন্ধন ফি</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-fragment="about">ব্যাচ সম্পর্কে</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-fragment="fees">অংশগ্রহণ ফি</a></li>
                         <li><a asp-controller="Registration" asp-action="Register">রেজিস্ট্রেশন করুন</a></li>
                         <li><a asp-controller="Registration" asp-action="Card">রেজিস্ট্রেশন কার্ড</a></li>
                         <li><a asp-controller="Home" asp-action="Privacy">গোপনীয়তা নীতি</a></li>
@@ -92,7 +92,7 @@
         </div>
         <div class="site-footer__bar">
             <div class="container">
-                © @BengaliText.ToBengaliDigits(DateTime.Now.Year) @Event.SchoolName · সর্বস্বত্ব সংরক্ষিত
+                © @BengaliText.ToBengaliDigits(DateTime.Now.Year) @Event.CommunityName · সর্বস্বত্ব সংরক্ষিত
             </div>
         </div>
     </footer>
