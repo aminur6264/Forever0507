@@ -1,0 +1,32 @@
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 14mm;
+    }
+
+    header, footer, .no-print, .site-nav, .cd {
+        display: none !important;
+    }
+
+    body {
+        display: block;
+        background: #fff;
+    }
+
+    .section {
+        padding: 0;
+    }
+
+    .reg-card {
+        max-width: none;
+        box-shadow: none;
+        border: 1px solid #333;
+        border-radius: 0;
+        page-break-inside: avoid;
+    }
+
+    .reg-card__head {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

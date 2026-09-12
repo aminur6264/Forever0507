@@ -1,6 +1,22 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+@{
+    ViewData["Title"] = "গোপনীয়তা নীতি";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<section class="section">
+    <div class="container" style="max-width: 46rem;">
+        <h1 class="h3 fw-bold mb-4" style="color: var(--brand-deep);">গোপনীয়তা নীতি</h1>
+
+        <p>
+            রেজিস্ট্রেশন ফর্মে দেওয়া তথ্য (নাম, মোবাইল নম্বর, পাসের সন, সঙ্গী/পরিবারের সদস্যের সংখ্যা ইত্যাদি)
+            শুধুমাত্র <strong>@Event.EventName</strong> আয়োজনের ব্যবস্থাপনার কাজে ব্যবহৃত হবে।
+        </p>
+        <p>
+            আপনার তথ্য কোনো তৃতীয় পক্ষের কাছে বিক্রি বা বিজ্ঞাপনের উদ্দেশ্যে হস্তান্তর করা হবে না।
+            আয়োজক কমিটির অনুমোদিত সদস্যরা শুধু আপ্যায়ন, আসন ও যোগাযোগ ব্যবস্থাপনার জন্য এই তথ্য দেখতে পারবেন।
+        </p>
+        <p class="mb-0">
+            আপনার তথ্য সংশোধন বা মুছে ফেলার অনুরোধের জন্য যোগাযোগ করুন:
+            <strong>@Event.ContactPhone</strong> / <strong>@Event.ContactEmail</strong>।
+        </p>
+    </div>
+</section>

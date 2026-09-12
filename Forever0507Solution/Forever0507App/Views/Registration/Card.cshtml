@@ -1,0 +1,69 @@
+@model Registration
+@{
+    ViewData["Title"] = $"রেজিস্ট্রেশন কার্ড — {Model.RegistrationNo}";
+}
+
+<section class="section">
+    <div class="container">
+        <article class="reg-card">
+            <header class="reg-card__head">
+                <svg width="56" height="56" viewBox="0 0 120 120" class="mb-2" role="img" aria-label="বিদ্যালয়ের প্রতীক">
+                    <circle cx="60" cy="60" r="56" fill="rgba(250,247,240,.12)" stroke="#d4a017" stroke-width="3" />
+                    <text x="60" y="74" text-anchor="middle" font-size="38" fill="#faf7f0" font-family="'Noto Serif Bengali', serif" font-weight="700">রা</text>
+                </svg>
+                <h1 class="h4 fw-bold mb-0">@Event.SchoolName</h1>
+                <p class="mb-0 small">@Event.EventName · @Event.Tagline</p>
+            </header>
+
+            <div class="reg-card__body">
+                <div class="text-center mb-4">
+                    <div class="small" style="color: var(--brand-muted);">রেজিস্ট্রেশন নম্বর</div>
+                    <div class="reg-card__regno">@Model.RegistrationNo</div>
+                </div>
+
+                <dl class="row mb-0">
+                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">নাম</dt>
+                    <dd class="col-7 col-sm-8 fw-semibold">@Model.FullName</dd>
+
+                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">পাসের সন</dt>
+                    <dd class="col-7 col-sm-8 fw-semibold">@BengaliText.ToBengaliDigits(Model.BatchYear) ব্যাচ</dd>
+
+                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">মোবাইল</dt>
+                    <dd class="col-7 col-sm-8 fw-semibold">@Model.Phone</dd>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Occupation))
+                    {
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">পেশা</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">@Model.Occupation</dd>
+                    }
+
+                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">সঙ্গী ও পরিবার</dt>
+                    <dd class="col-7 col-sm-8 fw-semibold">
+                        @BengaliText.ToBengaliDigits(Model.ExtraMembers) জন পূর্ণবয়স্ক ·
+                        @BengaliText.ToBengaliDigits(Model.ChildrenUnder5) জন শিশু (৫ বছরের কম)
+                        (মোট @BengaliText.ToBengaliDigits(Model.TotalAttendees) জন)
+                    </dd>
+
+                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">প্রদেয় ফি</dt>
+                    <dd class="col-7 col-sm-8 fw-semibold">@BengaliText.Taka(Model.FeeAmount) · @Model.PaymentStatus</dd>
+
+                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">তারিখ ও স্থান</dt>
+                    <dd class="col-7 col-sm-8 fw-semibold">
+                        @Event.StartTimeBn, @Event.StartTimeOnlyBn<br />
+                        @Event.Venue, @Event.Address
+                    </dd>
+                </dl>
+
+                <p class="small mt-3 mb-0 pt-3" style="border-top: 1px dashed rgba(11,61,46,.25); color: var(--brand-muted);">
+                    @Event.PayNote কার্ডটি প্রিন্ট করে বা মোবাইলে রেখে অনুষ্ঠানের দিন গেটে দেখান।
+                    যেকোনো প্রয়োজনে: @Event.ContactPhone
+                </p>
+            </div>
+        </article>
+
+        <div class="d-flex gap-3 justify-content-center mt-4 no-print">
+            <button type="button" class="btn btn-green btn-lg px-4" onclick="window.print()">প্রিন্ট করুন</button>
+            <a class="btn btn-outline-secondary btn-lg px-4" asp-controller="Home" asp-action="Index">হোমে ফিরে যান</a>
+        </div>
+    </div>
+</section>

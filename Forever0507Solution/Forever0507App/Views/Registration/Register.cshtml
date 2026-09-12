@@ -1,0 +1,95 @@
+@model RegistrationInputModel
+@{
+    ViewData["Title"] = "রেজিস্ট্রেশন ফর্ম";
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">রেজিস্ট্রেশন ফর্ম</h1>
+        <p class="page-hero__sub mb-0">@Event.EventName · @Event.StartTimeBn</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="form-panel">
+                    <form asp-controller="Registration" asp-action="Register" method="post" novalidate>
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                        <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">আপনার তথ্য</h2>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="FullName" class="form-label"></label>
+                                <input asp-for="FullName" class="form-control" placeholder="যেমন: রাকিব হাসান" />
+                                <span asp-validation-for="FullName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Phone" class="form-label"></label>
+                                <input asp-for="Phone" class="form-control" inputmode="numeric" maxlength="11" placeholder="01712345678" />
+                                <span asp-validation-for="Phone" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="BatchYear" class="form-label"></label>
+                                <input asp-for="BatchYear" class="form-control" type="number" min="1960" max="2026" placeholder="যেমন: ২০১৫" />
+                                <span asp-validation-for="BatchYear" class="text-danger small"></span>
+                                <div class="form-text">যে বছর ১০ম শ্রেণিতে (এসএসসি) পাস করেছেন অথবা শেষ ছিলেন।</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label"></label>
+                                <input asp-for="Email" class="form-control" placeholder="you@example.com" />
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Occupation" class="form-label"></label>
+                                <input asp-for="Occupation" class="form-control" placeholder="যেমন: শিক্ষক, ডাক্তার, ব্যবসায়ী" />
+                                <span asp-validation-for="Occupation" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="PresentAddress" class="form-label"></label>
+                                <input asp-for="PresentAddress" class="form-control" placeholder="শহর/জেলা" />
+                                <span asp-validation-for="PresentAddress" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <h2 class="h5 fw-bold mt-4 mb-3" style="color: var(--brand-deep);">সঙ্গী/পরিবার</h2>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="ExtraMembers" class="form-label"></label>
+                                <input asp-for="ExtraMembers" class="form-control" type="number" min="0" max="5" value="0" />
+                                <span asp-validation-for="ExtraMembers" class="text-danger small"></span>
+                                <div class="form-text">প্রতি জন পূর্ণবয়স্ক সদস্যের ফি @BengaliText.Taka(FeeCalculator.PerExtraMemberFee)।</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ChildrenUnder5" class="form-label"></label>
+                                <input asp-for="ChildrenUnder5" class="form-control" type="number" min="0" max="2" value="0" />
+                                <span asp-validation-for="ChildrenUnder5" class="text-danger small"></span>
+                                <div class="form-text">৫ বছরের কম বয়সী শিশুদের জন্য কোনো ফি নেই (সর্বোচ্চ ২ জন)।</div>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Note" class="form-label"></label>
+                                <textarea asp-for="Note" class="form-control" rows="3" placeholder="চাইলে কয়েক লাইনে আপনার স্মৃতিচারণ লিখে রাখুন…"></textarea>
+                                <span asp-validation-for="Note" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="fee-estimate mt-4">
+                            সম্ভাব্য অংশগ্রহণ ফি: <strong id="feeEstimate">—</strong>
+                            <div class="small" style="color: rgba(255,255,255,.7);">@Event.PayNote</div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                            <button type="submit" class="btn btn-green btn-lg px-5">রেজিস্ট্রেশন সম্পন্ন করুন</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/registration.js" asp-append-version="true"></script>
+}

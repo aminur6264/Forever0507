@@ -1,0 +1,51 @@
+@model Registration
+@{
+    ViewData["Title"] = "রেজিস্ট্রেশন সফল";
+}
+
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="form-panel text-center">
+                    <svg width="84" height="84" viewBox="0 0 24 24" fill="none" stroke="var(--brand-green)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="mb-3" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" /><path d="M8 12.5l2.5 2.5L16 9.5" />
+                    </svg>
+                    <h1 class="h3 fw-bold" style="color: var(--brand-deep);">রেজিস্ট্রেশন সফল হয়েছে!</h1>
+                    <p class="mb-4" style="color: var(--brand-muted);">
+                        ধন্যবাদ, @Model.FullName! @Event.EventName-এ আপনাকে স্বাগতম।
+                    </p>
+
+                    <div class="p-3 mb-4 rounded-4" style="background: var(--brand-green-soft);">
+                        <div class="small" style="color: var(--brand-muted);">আপনার রেজিস্ট্রেশন নম্বর</div>
+                        <div class="reg-card__regno">@Model.RegistrationNo</div>
+                    </div>
+
+                    <dl class="row text-start mb-4">
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">পাসের সন</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">@BengaliText.ToBengaliDigits(Model.BatchYear) ব্যাচ</dd>
+
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">সঙ্গী ও পরিবার</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">
+                            @BengaliText.ToBengaliDigits(Model.ExtraMembers) জন পূর্ণবয়স্ক,
+                            @BengaliText.ToBengaliDigits(Model.ChildrenUnder5) জন শিশু (৫ বছরের কম)
+                        </dd>
+
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">সর্বমোট ফি</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">@BengaliText.Taka(Model.FeeAmount)</dd>
+
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">অনুষ্ঠান</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">@Event.StartTimeBn, @Event.StartTimeOnlyBn — @Event.Venue</dd>
+                    </dl>
+
+                    <p class="small mb-4" style="color: var(--brand-muted);">@Event.PayNote</p>
+
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a class="btn btn-green btn-lg px-4" asp-action="Card" asp-route-id="@Model.RegistrationNo">কার্ড দেখুন ও প্রিন্ট করুন</a>
+                        <a class="btn btn-outline-secondary btn-lg px-4" asp-controller="Home" asp-action="Index">হোমে ফিরে যান</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

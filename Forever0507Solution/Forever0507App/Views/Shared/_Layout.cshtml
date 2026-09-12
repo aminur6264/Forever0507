@@ -1,47 +1,102 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="bn">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Forever0507App</title>
+    <meta name="description" content="@Event.SchoolName — @Event.EventName। @Event.Tagline।" />
+    <title>@ViewData["Title"] - @Event.SchoolName</title>
     <script type="importmap"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Forever0507App.styles.css" asp-append-version="true" />
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Forever0507App</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+        <nav class="navbar navbar-expand-lg navbar-dark site-nav sticky-top">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-area="" asp-controller="Home" asp-action="Index">
+                    <svg class="brand-mark" viewBox="0 0 48 48" role="img" aria-hidden="true">
+                        <defs>
+                            <linearGradient id="bm-g" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0" stop-color="#146b4a" />
+                                <stop offset="1" stop-color="#d4a017" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="24" cy="24" r="22" fill="url(#bm-g)" />
+                        <circle cx="24" cy="24" r="18.5" fill="none" stroke="#faf7f0" stroke-width="1.5" opacity=".85" />
+                        <text x="24" y="30" text-anchor="middle" font-size="15" fill="#faf7f0" font-family="'Noto Serif Bengali', serif" font-weight="700">রা</text>
+                    </svg>
+                    <span class="brand-text">
+                        <span class="brand-text__name">@Event.SchoolName</span>
+                        <small class="brand-text__tag">@Event.Tagline</small>
+                    </span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="মেনু চালু/বন্ধ করুন">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                <div class="navbar-collapse collapse d-lg-flex justify-content-end">
+                    <ul class="navbar-nav align-items-lg-center gap-lg-1">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">হোম</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="about">বিদ্যালয়</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="event">অনুষ্ঠান</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="fees">ফি ও নিয়মাবলি</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Registration" asp-action="Card">রেজিস্ট্রেশন কার্ড</a></li>
+                        <li class="nav-item ms-lg-2">
+                            <a class="btn btn-gold btn-sm px-3" asp-controller="Registration" asp-action="Register">রেজিস্ট্রেশন করুন</a>
                         </li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
+    <main role="main" class="flex-grow-1">
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
         <div class="container">
-            &copy; 2026 - Forever0507App - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <div class="row g-4">
+                <div class="col-lg-5">
+                    <h3 class="site-footer__title">@Event.SchoolName</h3>
+                    <p class="site-footer__tagline">@Event.Tagline — @Event.EventName</p>
+                    <p class="site-footer__text">
+                        বিদ্যালয়ের প্রতিটি প্রাক্তন শিক্ষার্থী আমাদের গর্ব। স্মৃতি, বন্ধুত্ব আর কৃতজ্ঞতাকে একসাথে
+                        উদযাপন করতে আমাদের পাশে থাকুন।
+                    </p>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <h4 class="site-footer__heading">দরকারি লিংক</h4>
+                    <ul class="site-footer__links">
+                        <li><a asp-controller="Home" asp-action="Index" asp-fragment="about">আমাদের বিদ্যালয়</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-fragment="fees">নিবন্ধন ফি</a></li>
+                        <li><a asp-controller="Registration" asp-action="Register">রেজিস্ট্রেশন করুন</a></li>
+                        <li><a asp-controller="Registration" asp-action="Card">রেজিস্ট্রেশন কার্ড</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy">গোপনীয়তা নীতি</a></li>
+                    </ul>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <h4 class="site-footer__heading">যোগাযোগ</h4>
+                    <ul class="site-footer__contact">
+                        <li>📍 @Event.Venue, @Event.Address</li>
+                        <li>📞 @Event.ContactPhone</li>
+                        <li>✉️ @Event.ContactEmail</li>
+                    </ul>
+                    <p class="site-footer__paynote">@Event.PayNote</p>
+                </div>
+            </div>
+        </div>
+        <div class="site-footer__bar">
+            <div class="container">
+                © @BengaliText.ToBengaliDigits(DateTime.Now.Year) @Event.SchoolName · সর্বস্বত্ব সংরক্ষিত
+            </div>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

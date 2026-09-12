@@ -1,8 +1,14 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = $"{Event.Tagline} — {Event.EventName}";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<partial name="Partials/_Hero" />
+<partial name="Partials/_About" />
+<partial name="Partials/_EventInfo" />
+<partial name="Partials/_Messages" />
+<partial name="Partials/_RegisterInfo" />
+<partial name="Partials/_Benefits" />
+
+@section Scripts {
+    <script src="~/js/countdown.js" asp-append-version="true"></script>
+}

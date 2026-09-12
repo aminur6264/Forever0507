@@ -1,0 +1,63 @@
+<section class="section section--alt" id="fees">
+    <div class="container">
+        <div class="section-head">
+            <span class="section-head__eyebrow">রেজিস্ট্রেশন</span>
+            <h2 class="section-head__title mt-1">কারা রেজিস্ট্রেশন করতে পারবেন?</h2>
+            <p class="section-head__lead mb-0">
+                রামপুর আদর্শ উচ্চ বিদ্যালয়ের সকল প্রাক্তন ছাত্রছাত্রী ও তাদের পরিবারবর্গ
+                পুনর্মিলনীতে নিবন্ধন করতে পারবেন।
+            </p>
+        </div>
+
+        <p class="text-center mb-5" style="color: var(--brand-muted);">
+            <strong>বি:দ্র:</strong> প্রাক্তন বলতে এখানে তাঁদেরই বোঝানো হয়েছে, যাঁরা ৬ষ্ঠ থেকে ১০ম শ্রেণির
+            যেকোনো একটি শ্রেণিতে অন্তত একবার এই বিদ্যালয়ে ভর্তি হয়েছিলেন।
+        </p>
+
+        <div class="row g-4 g-lg-5 mt-2">
+            <div class="col-sm-6 col-lg-3">
+                <div class="fee-card">
+                    <h3 class="fee-card__group">১৯৭২ - @BengaliText.ToBengaliDigits(FeeCalculator.SeniorBatchCutoffYear) ব্যাচ</h3>
+                    <p class="fee-card__sub">পুরাতন ব্যাচের প্রাক্তন শিক্ষার্থী</p>
+                    <p class="fee-card__fee-label">নিবন্ধন ফি</p>
+                    <p class="fee-card__amount mb-0">@BengaliText.Taka(FeeCalculator.SeniorFee)</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="fee-card">
+                    <h3 class="fee-card__group">@BengaliText.ToBengaliDigits(FeeCalculator.SeniorBatchCutoffYear + 1) - @BengaliText.ToBengaliDigits(2026) ব্যাচ</h3>
+                    <p class="fee-card__sub">নবীন ব্যাচের প্রাক্তন শিক্ষার্থী</p>
+                    <p class="fee-card__fee-label">নিবন্ধন ফি</p>
+                    <p class="fee-card__amount mb-0">@BengaliText.Taka(FeeCalculator.JuniorFee)</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="fee-card">
+                    <h3 class="fee-card__group">অতিরিক্ত সদস্য</h3>
+                    <p class="fee-card__sub">প্রতি জন সঙ্গী/পরিবারের পূর্ণবয়স্ক সদস্য</p>
+                    <p class="fee-card__fee-label">নিবন্ধন ফি</p>
+                    <p class="fee-card__amount mb-0">@BengaliText.Taka(FeeCalculator.PerExtraMemberFee)</p>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="fee-card fee-card--free">
+                    <span class="fee-card__badge">ফ্রি</span>
+                    <h3 class="fee-card__group">৫ বছরের কম বয়সী শিশু</h3>
+                    <p class="fee-card__sub">সর্বোচ্চ ২ জন পর্যন্ত</p>
+                    <p class="fee-card__fee-label">নিবন্ধন ফি</p>
+                    <p class="fee-card__amount mb-0">কোনো ফি নেই</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-success border-0 shadow-sm rounded-4 mt-5 mx-auto" style="max-width: 46rem;" role="alert">
+            💳 <strong>পেমেন্ট তথ্য:</strong> @Event.PayNote রেজিস্ট্রেশন সম্পন্ন হলেই আপনার
+            নম্বরসহ রেজিস্ট্রেশন কার্ড তৈরি হয়ে যাবে — সেটি প্রিন্ট করে বা মোবাইলে রেখেই
+            অনুষ্ঠানের দিন গেটে দেখাতে পারবেন।
+        </div>
+
+        <div class="text-center mt-4">
+            <a class="btn btn-green btn-lg px-5" asp-controller="Registration" asp-action="Register">এখনই রেজিস্ট্রেশন করুন</a>
+        </div>
+    </div>
+</section>
