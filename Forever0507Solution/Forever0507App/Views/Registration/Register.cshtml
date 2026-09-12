@@ -40,9 +40,9 @@
                                 <label asp-for="District" class="form-label"></label>
                                 <select asp-for="District" class="form-select">
                                     <option value="">— জেলা নির্বাচন করুন —</option>
-                                    @foreach (var district in (string[])ViewBag.Districts!)
+                                    @foreach (var district in (List<District>)ViewBag.Districts!)
                                     {
-                                        <option value="@district">@district</option>
+                                        <option value="@district.Name">@district.Name</option>
                                     }
                                 </select>
                                 <span asp-validation-for="District" class="text-danger small"></span>
@@ -51,9 +51,9 @@
                                 <label asp-for="SchoolChoice" class="form-label"></label>
                                 <select asp-for="SchoolChoice" class="form-select" id="SchoolChoice">
                                     <option value="">— স্কুল নির্বাচন করুন —</option>
-                                    @foreach (var school in (List<string>)ViewBag.Schools!)
+                                    @foreach (var school in (List<School>)ViewBag.Schools!)
                                     {
-                                        <option value="@school">@school</option>
+                                        <option value="@school.Name">@school.Name</option>
                                     }
                                     <option value="@RegistrationInputModel.OtherSchoolValue">অন্যান্য (নিজের স্কুলের নাম লিখুন)</option>
                                 </select>
@@ -74,11 +74,11 @@
                             <div class="col-12">
                                 <label asp-for="PaymentMedium" class="form-label d-block"></label>
                                 <div class="d-flex gap-3 flex-wrap">
-                                    @foreach (var medium in (string[])ViewBag.PaymentMediums!)
+                                    @foreach (var medium in (List<PaymentMediumOption>)ViewBag.PaymentMediums!)
                                     {
                                         <div class="form-check form-check-inline mb-0">
-                                            <input class="form-check-input" type="radio" asp-for="PaymentMedium" value="@medium" id="pm-@medium" />
-                                            <label class="form-check-label" for="pm-@medium">@medium</label>
+                                            <input class="form-check-input" type="radio" asp-for="PaymentMedium" value="@medium.Name" id="pm-@medium.Id" />
+                                            <label class="form-check-label" for="pm-@medium.Id">@medium.Name</label>
                                         </div>
                                     }
                                 </div>
@@ -112,10 +112,10 @@
                             <div class="col-12">
                                 <label asp-for="JerseySize" class="form-label d-block"></label>
                                 <div class="d-flex gap-2 flex-wrap">
-                                    @foreach (var (value, label) in ( (string, string)[] )ViewBag.JerseySizes!)
+                                    @foreach (var size in (List<JerseySizeOption>)ViewBag.JerseySizes!)
                                     {
-                                        <input type="radio" class="btn-check" asp-for="JerseySize" value="@value" id="js-@value" autocomplete="off" />
-                                        <label class="btn btn-outline-green" for="js-@value">@label</label>
+                                        <input type="radio" class="btn-check" asp-for="JerseySize" value="@size.Value" id="js-@size.Value" autocomplete="off" />
+                                        <label class="btn btn-outline-green" for="js-@size.Value">@size.Label</label>
                                     }
                                 </div>
                                 <span asp-validation-for="JerseySize" class="text-danger small"></span>

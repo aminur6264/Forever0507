@@ -1,6 +1,4 @@
-using System.Globalization;
 using Forever0507App.Data;
-using Forever0507App.Helpers;
 using Forever0507App.Models;
 using Forever0507App.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +12,7 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
     [HttpGet]
     public async Task<IActionResult> Register()
     {
-        ViewBag.Schools = await GetSchoolListAsync();
-        ViewBag.Districts = BdDistricts.List;
-        ViewBag.JerseySizes = JerseySize.Options;
-        ViewBag.PaymentMediums = PaymentMedium.All;
+        await PopulateLookupsAsync();
         return View(new RegistrationInputModel());
     }
 
@@ -26,18 +21,25 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegistrationInputModel model)
     {
-        ViewBag.Schools = await GetSchoolListAsync();
-        ViewBag.Districts = BdDistricts.List;
-        ViewBag.JerseySizes = JerseySize.Options;
-        ViewBag.PaymentMediums = PaymentMedium.All;
+        await PopulateLookupsAsync();
+
+        // Lookup values must exist in the seeded tables (client can only post what we offered).
+        if (!string.IsNullOrEmpty(model.District) && !await db.Districts.AnyAsync(d => d.Name == model.District))
+            ModelState.AddModelError(nameof(model.District), "সঠিক জেলা নির্বাচন করুন।");
+        if (!string.IsNullOrEmpty(model.PaymentMedium) && !await db.PaymentMediumOptions.AnyAsync(m => m.Name == model.PaymentMedium))
+            ModelState.AddModelError(nameof(model.PaymentMedium), "সঠিক ট্রানজেকশন মাধ্যম নির্বাচন করুন।");
+        if (!string.IsNullOrEmpty(model.JerseySize) && !await db.JerseySizeOptions.AnyAsync(j => j.Value == model.JerseySize))
+            ModelState.AddModelError(nameof(model.JerseySize), "সঠিক জার্সি সাইজ নির্বাচন করুন।");
 
         if (!ModelState.IsValid) return View(model);
 
-        var registration = new Registration
+        var schoolName = model.ResolvedSchoolName!;
+
+        db.Add(new Registration
         {
             FullName = model.FullName.Trim(),
             District = model.District!.Trim(),
-            SchoolName = model.ResolvedSchoolName!,
+            SchoolName = schoolName,
             SscYear = eventOptions.SscYear,
             PaymentMedium = model.PaymentMedium!,
             Amount = model.ResolvedAmount!.Value,
@@ -45,12 +47,16 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
             TransactionId = model.TransactionId!.Trim().ToUpperInvariant(),
             JerseySize = model.JerseySize!,
             Phone = model.Phone!.Trim()
-        };
+        });
 
-        db.Add(registration);
+        // A school the registrant typed in themselves joins the dropdown for everyone.
+        if (!await db.Schools.AnyAsync(s => s.Name == schoolName))
+            db.Schools.Add(new School { Name = schoolName, IsUserAdded = true });
+
         await db.SaveChangesAsync(); // identity Id assigned here
 
         // Reg no derived from the identity Id — cannot collide, no locking needed.
+        var registration = await db.Registrations.OrderBy(r => r.Id).LastAsync();
         registration.RegistrationNo = $"REG-{eventOptions.RegistrationYear}-{registration.Id:D4}";
         await db.SaveChangesAsync();
 
@@ -67,6 +73,8 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
         var registration = await db.Registrations.AsNoTracking()
             .FirstOrDefaultAsync(r => r.RegistrationNo == id);
         if (registration is null) return RedirectToAction(nameof(Register));
+
+        ViewBag.JerseyLabel = await GetJerseyLabelAsync(registration.JerseySize);
         return View(registration);
     }
 
@@ -91,21 +99,25 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
         }
 
         ViewBag.Searched = q is not null;
-        return registration is null ? View("CardLookup") : View("Card", registration);
+        if (registration is null) return View("CardLookup");
+
+        ViewBag.JerseyLabel = await GetJerseyLabelAsync(registration.JerseySize);
+        return View("Card", registration);
     }
 
-    /// <summary>Curated list from config, enriched with school names earlier registrants added themselves.</summary>
-    private async Task<List<string>> GetSchoolListAsync()
+    /// <summary>Dropdown data, all read from the seeded SQL Server lookup tables.</summary>
+    private async Task PopulateLookupsAsync()
     {
-        var added = await db.Registrations.AsNoTracking()
-            .Select(r => r.SchoolName)
-            .Distinct()
-            .ToListAsync();
-
-        return eventOptions.Schools
-            .Concat(added)
-            .Distinct()
-            .OrderBy(s => s, StringComparer.Create(new CultureInfo("bn-BD"), false))
-            .ToList();
+        ViewBag.Schools = await db.Schools.OrderBy(s => s.Id).ToListAsync();
+        ViewBag.Districts = await db.Districts.OrderBy(d => d.DisplayOrder).ToListAsync();
+        ViewBag.JerseySizes = await db.JerseySizeOptions.OrderBy(j => j.DisplayOrder).ToListAsync();
+        ViewBag.PaymentMediums = await db.PaymentMediumOptions.OrderBy(m => m.DisplayOrder).ToListAsync();
     }
+
+    private async Task<string> GetJerseyLabelAsync(string value)
+        => await db.JerseySizeOptions.AsNoTracking()
+               .Where(j => j.Value == value)
+               .Select(j => j.Label)
+               .FirstOrDefaultAsync()
+           ?? value;
 }

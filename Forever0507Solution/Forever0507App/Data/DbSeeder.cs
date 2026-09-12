@@ -1,9 +1,55 @@
-namespace Forever0507App.Helpers;
+using Forever0507App.Models;
+using Microsoft.EntityFrameworkCore;
 
-/// <summary>Bangladesh's 64 districts, alphabetical within each division.</summary>
-public static class BdDistricts
+namespace Forever0507App.Data;
+
+/// <summary>
+/// Seeds the lookup tables (districts, schools, jersey sizes, payment mediums) on first run.
+/// Each table is only filled while empty, so registrant-added schools are never overwritten.
+/// </summary>
+public static class DbSeeder
 {
-    public static readonly string[] List =
+    public static async Task SeedAsync(AlumniDbContext db, EventOptions eventOptions)
+    {
+        if (!await db.Districts.AnyAsync())
+        {
+            db.Districts.AddRange(DistrictNames.Select((name, i) => new District { Name = name, DisplayOrder = i }));
+            await db.SaveChangesAsync();
+        }
+
+        if (!await db.Schools.AnyAsync())
+        {
+            db.Schools.AddRange(eventOptions.Schools.Select(name => new School { Name = name, IsUserAdded = false }));
+            await db.SaveChangesAsync();
+        }
+
+        if (!await db.JerseySizeOptions.AnyAsync())
+        {
+            db.JerseySizeOptions.AddRange(
+            [
+                new() { Value = "S", Label = "স্মল (S)", DisplayOrder = 1 },
+                new() { Value = "M", Label = "মিডিয়াম (M)", DisplayOrder = 2 },
+                new() { Value = "L", Label = "লার্জ (L)", DisplayOrder = 3 },
+                new() { Value = "XL", Label = "এক্সট্রা লার্জ (XL)", DisplayOrder = 4 },
+                new() { Value = "XXL", Label = "ডাবল এক্সট্রা লার্জ (XXL)", DisplayOrder = 5 },
+            ]);
+            await db.SaveChangesAsync();
+        }
+
+        if (!await db.PaymentMediumOptions.AnyAsync())
+        {
+            db.PaymentMediumOptions.AddRange(
+            [
+                new() { Name = "বিকাশ", DisplayOrder = 1 },
+                new() { Name = "নগদ", DisplayOrder = 2 },
+                new() { Name = "রকেট", DisplayOrder = 3 },
+            ]);
+            await db.SaveChangesAsync();
+        }
+    }
+
+    /// <summary>Bangladesh's 64 districts, grouped by division.</summary>
+    private static readonly string[] DistrictNames =
     [
         // ঢাকা বিভাগ
         "ঢাকা", "গাজীপুর", "গোপালগঞ্জ", "কিশোরগঞ্জ", "ফরিদপুর", "মাদারীপুর", "মানিকগঞ্জ",

@@ -16,11 +16,12 @@ builder.Services.AddDbContext<AlumniDbContext>(options =>
 
 var app = builder.Build();
 
-// Demo site: create the database straight from the model (no migrations).
+// Demo site: create the database straight from the model (no migrations), then seed lookup data.
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AlumniDbContext>();
     db.Database.EnsureCreated();
+    await DbSeeder.SeedAsync(db, app.Services.GetRequiredService<EventOptions>());
 }
 
 // Configure the HTTP request pipeline.

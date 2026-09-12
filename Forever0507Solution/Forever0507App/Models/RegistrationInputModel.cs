@@ -83,10 +83,7 @@ public class RegistrationInputModel : IValidatableObject
                     [nameof(AmountText)]);
         }
 
-        if (!string.IsNullOrEmpty(PaymentMedium) && !Helpers.PaymentMedium.All.Contains(PaymentMedium))
-            yield return new ValidationResult("সঠিক ট্রানজেকশন মাধ্যম নির্বাচন করুন।", [nameof(PaymentMedium)]);
-
-        if (!string.IsNullOrEmpty(JerseySize) && !Helpers.JerseySize.All.Contains(JerseySize))
-            yield return new ValidationResult("সঠিক জার্সি সাইজ নির্বাচন করুন।", [nameof(JerseySize)]);
+        // District / payment-medium / jersey-size whitelisting lives in the controller,
+        // checked against the seeded SQL Server lookup tables.
     }
 }
