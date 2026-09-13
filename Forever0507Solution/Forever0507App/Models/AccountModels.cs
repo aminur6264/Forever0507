@@ -63,4 +63,7 @@ public class CreateUserInputModel
     [Required(ErrorMessage = "প্রাথমিক পাসওয়ার্ড দিন।")]
     [Display(Name = "প্রাথমিক পাসওয়ার্ড")]
     public string? Password { get; set; }
+
+    /// <summary>Off by default — new accounts are regular users unless this is checked.</summary>
+    public bool IsAdmin { get; set; }
 }

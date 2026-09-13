@@ -17,5 +17,8 @@ public class AppUser
     /// <summary>True right after account creation or an admin password reset — the user must set a new password at next login.</summary>
     public bool MustChangePassword { get; set; }
 
+    /// <summary>Admins manage users and registrations; everyone else is a regular user. Default is regular.</summary>
+    public bool IsAdmin { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -53,11 +53,35 @@ public class AdminController(AlumniDbContext db) : Controller
         {
             Phone = model.Phone!,
             PasswordHash = PasswordHasher.Hash(model.Password!),
-            MustChangePassword = true, // user sets their own password at first login
+            // Regular users set their own password at first login; admins already chose it here,
+            // and the change-password page redirects admins away — a pending flag would loop.
+            MustChangePassword = !model.IsAdmin,
+            IsAdmin = model.IsAdmin,
         });
         await db.SaveChangesAsync();
 
-        TempData["Flash"] = $"{model.Phone} নম্বরে নতুন অ্যাকাউন্ট তৈরি হয়েছে। প্রথম লগইনে সে পাসওয়ার্ড বদলাতে বাধ্য হবে।";
+        TempData["Flash"] = model.IsAdmin
+            ? $"{model.Phone} নম্বরে নতুন অ্যাডমিন অ্যাকাউন্ট তৈরি হয়েছে।"
+            : $"{model.Phone} নম্বরে নতুন অ্যাকাউন্ট তৈরি হয়েছে। প্রথম লগইনে সে পাসওয়ার্ড বদলাতে বাধ্য হবে।";
+        return RedirectToAction(nameof(Users));
+    }
+
+    // POST /Admin/ToggleRole/5 — flip a user between regular and admin.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleRole(int id)
+    {
+        var user = await db.AppUsers.FirstOrDefaultAsync(u => u.Id == id);
+        if (user is not null)
+        {
+            user.IsAdmin = !user.IsAdmin;
+            if (user.IsAdmin) user.MustChangePassword = false; // same loop-avoidance as CreateUser
+            await db.SaveChangesAsync();
+
+            TempData["Flash"] = user.IsAdmin
+                ? $"{user.Phone} এখন অ্যাডমিন।"
+                : $"{user.Phone} এখন রেগুলার ব্যবহারকারী।";
+        }
         return RedirectToAction(nameof(Users));
     }
 
@@ -74,21 +98,6 @@ public class AdminController(AlumniDbContext db) : Controller
         await db.SaveChangesAsync();
 
         TempData["Flash"] = $"{user.Phone} এর পাসওয়ার্ড রিসেট হয়েছে। নতুন পাসওয়ার্ড তার ইউজারনেম (ফোন নম্বর)ই — পরের লগইনে সে নতুন পাসওয়ার্ড সেট করতে বাধ্য হবে।";
-        return RedirectToAction(nameof(Users));
-    }
-
-    // POST /Admin/DeleteUser
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteUser(int id)
-    {
-        var user = await db.AppUsers.FirstOrDefaultAsync(u => u.Id == id);
-        if (user is not null)
-        {
-            db.AppUsers.Remove(user);
-            await db.SaveChangesAsync();
-            TempData["Flash"] = $"{user.Phone} অ্যাকাউন্ট মুছে ফেলা হয়েছে।";
-        }
         return RedirectToAction(nameof(Users));
     }
 

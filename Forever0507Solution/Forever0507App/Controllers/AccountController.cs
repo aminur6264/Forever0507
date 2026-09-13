@@ -44,6 +44,7 @@ public class AccountController(AlumniDbContext db) : Controller
 
         await SignInRegularAsync(user);
         if (user.MustChangePassword) return RedirectToAction(nameof(ChangePassword));
+        if (user.IsAdmin) return RedirectToAction("Index", "Admin");
         return LocalRedirect(returnUrl ?? "/");
     }
 
@@ -158,7 +159,7 @@ public class AccountController(AlumniDbContext db) : Controller
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.Phone),
-            new(ClaimTypes.Role, AuthConstants.RegularRole),
+            new(ClaimTypes.Role, user.IsAdmin ? AuthConstants.AdminRole : AuthConstants.RegularRole),
         };
         if (user.MustChangePassword)
             claims.Add(new Claim(AuthConstants.MustChangePasswordClaim, "true"));

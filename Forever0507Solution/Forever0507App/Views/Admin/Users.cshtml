@@ -7,7 +7,7 @@
 <div class="page-hero">
     <div class="container">
         <h1 class="page-hero__title h2 mb-1">ব্যবহারকারী ব্যবস্থাপনা</h1>
-        <p class="page-hero__sub mb-0">নতুন অ্যাকাউন্ট তৈরি, পাসওয়ার্ড রিসেট ও অ্যাকাউন্ট মুছে ফেলা।</p>
+        <p class="page-hero__sub mb-0">নতুন অ্যাকাউন্ট তৈরি, পাসওয়ার্ড রিসেট ও রোল পরিবর্তন।</p>
     </div>
 </div>
 
@@ -26,14 +26,21 @@
         <div class="form-panel mb-4">
             <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">নতুন ব্যবহারকারী তৈরি করুন</h2>
             <form asp-controller="Admin" asp-action="CreateUser" method="post" class="row g-3 align-items-end" novalidate>
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label class="form-label" for="Phone">ফোন নম্বর (ইউজারনেম)</label>
                     <input type="text" name="Phone" id="Phone" class="form-control" maxlength="11" placeholder="01712345678" required />
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label class="form-label" for="Password">প্রাথমিক পাসওয়ার্ড</label>
                     <input type="text" name="Password" id="Password" class="form-control" placeholder="যেকোনো সহজ পাসওয়ার্ড" required />
                     <div class="form-text">প্রথম লগইনে ব্যবহারকারী নিজের পাসওয়ার্ড বদলে নেবে।</div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check form-switch" style="transform: scale(1.15); transform-origin: left center;">
+                        <input class="form-check-input" type="checkbox" role="switch" name="IsAdmin" value="true" id="IsAdmin" />
+                        <label class="form-check-label small fw-semibold" for="IsAdmin">অ্যাডমিন</label>
+                    </div>
+                    <div class="form-text">ডিফল্ট: রেগুলার</div>
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-green w-100">তৈরি করুন</button>
@@ -55,6 +62,7 @@
                             <tr>
                                 <th scope="col">ফোন (ইউজারনেম)</th>
                                 <th scope="col">তৈরি</th>
+                                <th scope="col">রোল</th>
                                 <th scope="col">পাসওয়ার্ড অবস্থা</th>
                                 <th scope="col" style="min-width: 220px;">ব্যবস্থাপনা</th>
                             </tr>
@@ -66,6 +74,9 @@
                                     <td class="fw-semibold">@user.Phone</td>
                                     <td>@BengaliText.ToBengaliDigits(user.CreatedAt.ToString("dd MMM yyyy"))</td>
                                     <td>
+                                        <span class="badge @(user.IsAdmin ? "text-bg-dark" : "text-bg-secondary")">@(user.IsAdmin ? "অ্যাডমিন" : "রেগুলার")</span>
+                                    </td>
+                                    <td>
                                         @if (user.MustChangePassword)
                                         {
                                             <span class="badge text-bg-warning">পরিবর্তন বাকি</span>
@@ -75,15 +86,17 @@
                                             <span class="badge text-bg-success">সেট করেছে</span>
                                         }
                                     </td>
-                                    <td>
+                                    <td class="text-nowrap">
                                         <form asp-controller="Admin" asp-action="ResetPassword" asp-route-id="@user.Id" method="post" class="d-inline"
                                               onsubmit="return confirm('@user.Phone এর পাসওয়ার্ড রিসেট করবেন? নতুন পাসওয়ার্ড হবে তার ইউজারনেম (ফোন নম্বর)ই।');">
-                                            <button type="submit" class="btn btn-sm btn-outline-green text-nowrap">পাসওয়ার্ড রিসেট</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-green">পাসওয়ার্ড রিসেট</button>
                                         </form>
-                                        <form asp-controller="Admin" asp-action="DeleteUser" method="post" class="d-inline ms-1"
-                                              onsubmit="return confirm('@user.Phone অ্যাকাউন্টটি মুছে ফেলবেন?');">
-                                            <input type="hidden" name="id" value="@user.Id" />
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">মুছে ফেলুন</button>
+                                        <form asp-controller="Admin" asp-action="ToggleRole" asp-route-id="@user.Id" method="post" class="d-inline ms-2 align-middle">
+                                            <div class="form-check form-switch m-0">
+                                                <input class="form-check-input" type="checkbox" role="switch" name="on" value="1" @(user.IsAdmin ? "checked" : "")
+                                                       onchange="if (confirm('@(user.IsAdmin ? $"{user.Phone} কে রেগুলার ব্যবহারকারী করবেন?" : $"{user.Phone} কে অ্যাডমিন করবেন?")')) this.form.submit(); else this.checked = !this.checked;"
+                                                       title="রেগুলার ↔ অ্যাডমিন" />
+                                            </div>
                                         </form>
                                     </td>
                                 </tr>
