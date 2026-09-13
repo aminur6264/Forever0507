@@ -19,7 +19,16 @@
                         <div class="msg-card">
                             <blockquote class="msg-card__quote mb-0">@note.Message</blockquote>
                             <div class="msg-card__person">
-                                <span class="msg-card__avatar @variant" aria-hidden="true">@note.Name[..1]</span>
+                                @if (!string.IsNullOrEmpty(note.PhotoUrl))
+                                {
+                                    <span class="msg-card__avatar @variant p-0 overflow-hidden" aria-hidden="true">
+                                        <img src="@note.PhotoUrl" alt="@note.Name" style="width:100%;height:100%;object-fit:cover;" />
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="msg-card__avatar @variant" aria-hidden="true">@note.Name[..1]</span>
+                                }
                                 <div>
                                     <p class="msg-card__name">@note.Name</p>
                                     <p class="msg-card__role">@note.Designation</p>

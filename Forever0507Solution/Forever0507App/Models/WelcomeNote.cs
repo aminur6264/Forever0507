@@ -16,6 +16,10 @@ public class WelcomeNote
     [MaxLength(120)]
     public string Designation { get; set; } = "";
 
+    /// <summary>Optional profile photo under /uploads/welcome. Null → the letter avatar is shown instead.</summary>
+    [MaxLength(200)]
+    public string? PhotoUrl { get; set; }
+
     /// <summary>Inactive notes stay listed but are hidden from the home page; new notes start active.</summary>
     public bool IsActive { get; set; } = true;
 }

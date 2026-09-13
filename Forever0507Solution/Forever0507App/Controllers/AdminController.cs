@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Forever0507App.Controllers;
 
 [Authorize(Roles = AuthConstants.AdminRole)]
-public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder) : Controller
+public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder, IWebHostEnvironment env) : Controller
 {
     public const string PaymentVerified = "নিশ্চিত";
     public const string PaymentPending = "যাচাই অপেক্ষমান";
@@ -288,10 +288,11 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder)
     }
 
     // POST /Admin/SaveWelcomeNote — insert when Id is 0, update otherwise. New notes start active;
-    // the status itself is only changed by the switch in the list.
+    // the status itself is only changed by the switch in the list. An optional profile photo
+    // (jpg/png/webp, ≤ 2 MB) is stored under wwwroot/uploads/welcome and replaces any previous one.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveWelcomeNote(WelcomeNoteInputModel model)
+    public async Task<IActionResult> SaveWelcomeNote(WelcomeNoteInputModel model, IFormFile? photo)
     {
         if (!ModelState.IsValid)
         {
@@ -299,29 +300,63 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder)
             return RedirectToAction(nameof(WelcomeNotes));
         }
 
+        string? photoUrl = null;
+        if (photo is { Length: > 0 })
+        {
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var ext = Path.GetExtension(photo.FileName).ToLowerInvariant();
+            if (!allowed.Contains(ext) || photo.Length > 2 * 1024 * 1024)
+            {
+                TempData["FlashError"] = "ছবি হতে হবে jpg/png/webp এবং সর্বোচ্চ ২ এমবি।";
+                return RedirectToAction(nameof(WelcomeNotes));
+            }
+
+            var folder = Path.Combine(env.WebRootPath, "uploads", "welcome");
+            Directory.CreateDirectory(folder);
+            var fileName = $"{Guid.NewGuid():N}{ext}";
+            await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
+            await photo.CopyToAsync(stream);
+            photoUrl = $"/uploads/welcome/{fileName}";
+        }
+
+        WelcomeNote note;
         if (model.Id == 0)
         {
-            db.WelcomeNotes.Add(new WelcomeNote
-            {
-                Message = model.Message!.Trim(),
-                Name = model.Name!.Trim(),
-                Designation = model.Designation!.Trim(),
-                IsActive = true,
-            });
+            note = new WelcomeNote { IsActive = true };
+            db.WelcomeNotes.Add(note);
         }
         else
         {
-            var note = await db.WelcomeNotes.FirstOrDefaultAsync(w => w.Id == model.Id);
+            note = await db.WelcomeNotes.FirstOrDefaultAsync(w => w.Id == model.Id);
             if (note is null) return NotFound();
+        }
 
-            note.Message = model.Message!.Trim();
-            note.Name = model.Name!.Trim();
-            note.Designation = model.Designation!.Trim();
+        note.Message = model.Message!.Trim();
+        note.Name = model.Name!.Trim();
+        note.Designation = model.Designation!.Trim();
+        if (photoUrl is not null)
+        {
+            DeleteWelcomePhoto(note.PhotoUrl); // replace the old file only after a new one is in hand
+            note.PhotoUrl = photoUrl;
         }
         await db.SaveChangesAsync();
 
         TempData["Flash"] = model.Id == 0 ? "ওয়েলকাম নোট যোগ হয়েছে।" : "ওয়েলকাম নোট আপডেট হয়েছে।";
         return RedirectToAction(nameof(WelcomeNotes));
+    }
+
+    private void DeleteWelcomePhoto(string? photoUrl)
+    {
+        if (string.IsNullOrEmpty(photoUrl)) return;
+        try
+        {
+            var full = Path.Combine(env.WebRootPath, photoUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
+        }
+        catch (IOException)
+        {
+            // best effort — a stale file in uploads is harmless
+        }
     }
 
     // POST /Admin/ToggleWelcomeNoteStatus/5 — flip a note between active (home page) and inactive.

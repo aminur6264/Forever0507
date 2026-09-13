@@ -27,20 +27,35 @@
             <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">
                 @(editing is null ? "নতুন ওয়েলকাম নোট যোগ করুন" : "ওয়েলকাম নোট সম্পাদনা")
             </h2>
-            <form asp-controller="Admin" asp-action="SaveWelcomeNote" method="post" novalidate>
+            <form asp-controller="Admin" asp-action="SaveWelcomeNote" method="post" enctype="multipart/form-data" novalidate>
                 <input type="hidden" name="Id" value="@(editing?.Id ?? 0)" />
                 <div class="row g-3">
                     <div class="col-12">
                         <label class="form-label" for="Message">বার্তা</label>
                         <textarea name="Message" id="Message" class="form-control" rows="4" required>@editing?.Message</textarea>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label" for="Name">নাম</label>
                         <input type="text" name="Name" id="Name" class="form-control" required value="@editing?.Name" />
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label" for="Designation">পদবি</label>
                         <input type="text" name="Designation" id="Designation" class="form-control" required value="@editing?.Designation" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="Photo">প্রোফাইল ছবি (jpg/png/webp, ≤ ২MB)</label>
+                        <input type="file" name="photo" id="Photo" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                        @if (!string.IsNullOrEmpty(editing?.PhotoUrl))
+                        {
+                            <div class="form-text d-flex align-items-center gap-2 mt-1">
+                                <img src="@editing.PhotoUrl" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;" />
+                                বর্তমান ছবি — নতুন দিলে বদলে যাবে
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="form-text">ঐচ্ছিক — না দিলে নামের প্রথম অক্ষর দেখাবে।</div>
+                        }
                     </div>
                 </div>
                 <div class="d-flex gap-2 mt-3">
@@ -77,7 +92,13 @@
                             {
                                 <tr>
                                     <td style="max-width: 420px;">@(note.Message.Length > 120 ? note.Message[..120] + "…" : note.Message)</td>
-                                    <td class="fw-semibold text-nowrap">@note.Name</td>
+                                    <td class="fw-semibold text-nowrap">
+                                        @if (!string.IsNullOrEmpty(note.PhotoUrl))
+                                        {
+                                            <img src="@note.PhotoUrl" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;" class="me-1 align-middle" />
+                                        }
+                                        @note.Name
+                                    </td>
                                     <td class="text-nowrap">@note.Designation</td>
                                     <td>
                                         <form asp-controller="Admin" asp-action="ToggleWelcomeNoteStatus" asp-route-id="@note.Id" method="post" class="d-inline align-middle">
