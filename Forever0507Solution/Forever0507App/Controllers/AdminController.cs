@@ -376,6 +376,69 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return RedirectToAction(nameof(WelcomeNotes));
     }
 
+    // GET /Admin/WhyJoin — add/edit form on top, list with status switches below. ?edit=N prefills.
+    public async Task<IActionResult> WhyJoin(int? edit)
+    {
+        ViewBag.WhyJoinItems = await db.WhyJoinItems.OrderBy(w => w.Id).ToListAsync();
+        ViewBag.AvailableIcons = WhyJoinItem.AvailableIcons;
+        if (edit is int id)
+            ViewBag.Editing = await db.WhyJoinItems.AsNoTracking().FirstOrDefaultAsync(w => w.Id == id);
+        return View();
+    }
+
+    // POST /Admin/SaveWhyJoin — insert when Id is 0, update otherwise. The icon must come from the
+    // curated select; status is only changed by the switch in the list.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveWhyJoin(WhyJoinItemInputModel model)
+    {
+        if (!WhyJoinItem.AvailableIcons.Contains(model.Icon))
+            ModelState.AddModelError(nameof(model.Icon), "তালিকা থেকে আইকন নির্বাচন করুন।");
+
+        if (!ModelState.IsValid)
+        {
+            TempData["FlashError"] = "ফর্মের তথ্য ঠিক নয় — আবার চেষ্টা করুন।";
+            return RedirectToAction(nameof(WhyJoin));
+        }
+
+        WhyJoinItem item;
+        if (model.Id == 0)
+        {
+            item = new WhyJoinItem { IsActive = true };
+            db.WhyJoinItems.Add(item);
+        }
+        else
+        {
+            item = await db.WhyJoinItems.FirstOrDefaultAsync(w => w.Id == model.Id);
+            if (item is null) return NotFound();
+        }
+
+        item.Title = model.Title!.Trim();
+        item.Description = model.Description!.Trim();
+        item.Icon = model.Icon!;
+        await db.SaveChangesAsync();
+
+        TempData["Flash"] = model.Id == 0 ? "কার্ড যোগ হয়েছে।" : "কার্ড আপডেট হয়েছে।";
+        return RedirectToAction(nameof(WhyJoin));
+    }
+
+    // POST /Admin/ToggleWhyJoinStatus/5 — flip a benefit card between active (home page) and inactive.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleWhyJoinStatus(int id)
+    {
+        var item = await db.WhyJoinItems.FirstOrDefaultAsync(w => w.Id == id);
+        if (item is not null)
+        {
+            item.IsActive = !item.IsActive;
+            await db.SaveChangesAsync();
+            TempData["Flash"] = item.IsActive
+                ? $"{item.Title} চালু করা হয়েছে।"
+                : $"{item.Title} বন্ধ করা হয়েছে।";
+        }
+        return RedirectToAction(nameof(WhyJoin));
+    }
+
     // POST /Admin/TogglePayment/REG-2026-0001
     [HttpPost]
     [ValidateAntiForgeryToken]

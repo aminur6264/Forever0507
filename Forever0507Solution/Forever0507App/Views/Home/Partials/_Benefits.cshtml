@@ -1,97 +1,30 @@
-<section class="section section--alt" id="benefits">
-    <div class="container">
-        <div class="section-head">
-            <span class="section-head__eyebrow">কেন আসবেন</span>
-            <h2 class="section-head__title mt-1">কেন পুনর্মিলনীতে যোগ দেবেন?</h2>
-            <p class="section-head__lead mb-0">
-                প্রায় দুই দশক পর পুরো ব্যাচ এক মাঠে — এমন সুযোগ জীবনে আর আসতে পারে না।
-            </p>
-        </div>
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-4">
-                <div class="benefit-card">
-                    <span class="benefit-card__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                        </svg>
-                    </span>
-                    <h3 class="benefit-card__title">হারিয়ে যাওয়া বন্ধুদের খোঁজ</h3>
-                    <p class="benefit-card__text mb-0">
-                        স্কুলজীবনের পর যাঁদের আর খুঁজে পাননি, ৬৪ জেলার ব্যাচমেটদের ভিড়ে তাঁদের খুঁজে
-                        নিন — জড়িয়ে ধরুন আবার।
-                    </p>
-                </div>
+@{
+    var whyJoinItems = (List<WhyJoinItem>)ViewBag.WhyJoinItems!;
+}
+
+@if (whyJoinItems.Count > 0)
+{
+    <section class="section section--alt" id="benefits">
+        <div class="container">
+            <div class="section-head">
+                <span class="section-head__eyebrow">কেন আসবেন</span>
+                <h2 class="section-head__title mt-1">কেন পুনর্মিলনীতে যোগ দেবেন?</h2>
+                <p class="section-head__lead mb-0">
+                    প্রায় দুই দশক পর পুরো ব্যাচ এক মাঠে — এমন সুযোগ জীবনে আর আসতে পারে না।
+                </p>
             </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="benefit-card">
-                    <span class="benefit-card__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
-                    </span>
-                    <h3 class="benefit-card__title">শিক্ষকদের সম্মাননা</h3>
-                    <p class="benefit-card__text mb-0">
-                        যাঁদের সাধনায় আমরা গড়ে উঠেছি, পুনর্মিলনীর মঞ্চ থেকেই জাতীয় আয়োজনে সেই
-                        শিক্ষকদের জানাই সালাম ও কৃতজ্ঞতা।
-                    </p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="benefit-card">
-                    <span class="benefit-card__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <circle cx="12" cy="5" r="3" /><circle cx="5" cy="19" r="3" /><circle cx="19" cy="19" r="3" /><line x1="12" y1="8" x2="5" y2="16" /><line x1="12" y1="8" x2="19" y2="16" />
-                        </svg>
-                    </span>
-                    <h3 class="benefit-card__title">৬৪ জেলার নেটওয়ার্ক</h3>
-                    <p class="benefit-card__text mb-0">
-                        সারা দেশে ছড়িয়ে থাকা ডাক্তার, প্রকৌশলী, শিক্ষক, ব্যবসায়ী, সরকারি কর্মকর্তা
-                        ব্যাচমেটদের সাথে গড়ুন আজীবনের সংযোগ।
-                    </p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="benefit-card">
-                    <span class="benefit-card__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M3 21h18" /><path d="M5 21V7l7-4 7 4v14" /><path d="M9 21v-6h6v6" /><path d="M12 3v4" />
-                        </svg>
-                    </span>
-                    <h3 class="benefit-card__title">স্মৃতিচারণ ও অভিজ্ঞতা বিনিময়</h3>
-                    <p class="benefit-card__text mb-0">
-                        একই বছরের পরীক্ষার টেনশন থেকে কলেজের প্রথম দিন — যারা একই সময়ে একই বয়সে
-                        বড় হয়েছে, তাঁদের গল্পের মেলা আরও প্রাণবন্ত।
-                    </p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="benefit-card">
-                    <span class="benefit-card__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
-                        </svg>
-                    </span>
-                    <h3 class="benefit-card__title">সাংস্কৃতিক সন্ধ্যা ও প্রীতিভোজ</h3>
-                    <p class="benefit-card__text mb-0">
-                        জার্সি পরে মাঠে পুরনো খেলা, ব্যাচমেটদের সাংস্কৃতিক পরিবেশনা আর এক টেবিলে
-                        প্রীতিভোজ — সারাদিন জুড়ে আয়োজনের মাত।
-                    </p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="benefit-card">
-                    <span class="benefit-card__icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M12 2l2.4 5.3 5.6.6-4.2 3.9 1.2 5.6L12 14.9 7 17.4l1.2-5.6L4 7.9l5.6-.6z" />
-                        </svg>
-                    </span>
-                    <h3 class="benefit-card__title">ব্যাচ কল্যাণ তহবিল</h3>
-                    <p class="benefit-card__text mb-0">
-                        রেজিস্ট্রেশন ফি ছাড়াও যাঁরা ইচ্ছামতো অবদান রাখবেন, তা থাকবে ব্যাচের সুবিধাবঞ্চিত
-                        বন্ধু ও পরবর্তী প্রজন্মের পাশে দাঁড়ানোর তহবিলে।
-                    </p>
-                </div>
+            <div class="row g-4">
+                @foreach (var item in whyJoinItems)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="benefit-card">
+                            <span class="benefit-card__icon benefit-card__icon--emoji">@item.Icon</span>
+                            <h3 class="benefit-card__title">@item.Title</h3>
+                            <p class="benefit-card__text mb-0">@item.Description</p>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
-    </div>
-</section>
+    </section>
+}

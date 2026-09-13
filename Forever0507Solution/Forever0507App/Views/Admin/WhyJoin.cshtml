@@ -1,0 +1,110 @@
+@{
+    ViewData["Title"] = "কেন যোগ দেবেন";
+    var items = (List<WhyJoinItem>)ViewBag.WhyJoinItems!;
+    var icons = (string[])ViewBag.AvailableIcons!;
+    var editing = ViewBag.Editing as WhyJoinItem;
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">কেন যোগ দেবেন</h1>
+        <p class="page-hero__sub mb-0">হোম পেজের বেনিফিট কার্ডসমূহ — চালু কার্ডগুলোই সাইটে দেখা যাবে।</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+
+        @if (TempData["Flash"] is string flash)
+        {
+            <div class="alert alert-success rounded-4" role="alert">✓ @flash</div>
+        }
+        @if (TempData["FlashError"] is string flashError)
+        {
+            <div class="alert alert-danger rounded-4" role="alert">✕ @flashError</div>
+        }
+
+        <div class="form-panel mb-4">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">
+                @(editing is null ? "নতুন কার্ড যোগ করুন" : "কার্ড সম্পাদনা")
+            </h2>
+            <form asp-controller="Admin" asp-action="SaveWhyJoin" method="post" novalidate>
+                <input type="hidden" name="Id" value="@(editing?.Id ?? 0)" />
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <label class="form-label" for="Icon">আইকন</label>
+                        <select name="Icon" id="Icon" class="form-select" required>
+                            <option value="">— নির্বাচন —</option>
+                            @foreach (var icon in icons)
+                            {
+                                <option value="@icon" selected="@(editing?.Icon == icon)">@icon</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-10">
+                        <label class="form-label" for="Title">শিরোনাম</label>
+                        <input type="text" name="Title" id="Title" class="form-control" required value="@editing?.Title" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="Description">বর্ণনা</label>
+                        <textarea name="Description" id="Description" class="form-control" rows="2" required>@editing?.Description</textarea>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-green px-4">@(editing is null ? "যোগ করুন" : "আপডেট করুন")</button>
+                    @if (editing is not null)
+                    {
+                        <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="WhyJoin">নতুন যোগে ফিরুন</a>
+                    }
+                </div>
+            </form>
+        </div>
+
+        <div class="form-panel">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">কার্ড তালিকা</h2>
+            @if (items.Count == 0)
+            {
+                <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো কার্ড যোগ করা হয়নি।</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col">আইকন</th>
+                                <th scope="col">শিরোনাম</th>
+                                <th scope="col">বর্ণনা</th>
+                                <th scope="col">স্ট্যাটাস</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in items)
+                            {
+                                <tr>
+                                    <td><span class="fs-4">@item.Icon</span></td>
+                                    <td class="fw-semibold text-nowrap">@item.Title</td>
+                                    <td style="max-width: 380px;">@(item.Description.Length > 100 ? item.Description[..100] + "…" : item.Description)</td>
+                                    <td>
+                                        <form asp-controller="Admin" asp-action="ToggleWhyJoinStatus" asp-route-id="@item.Id" method="post" class="d-inline align-middle">
+                                            <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary") me-2">@(item.IsActive ? "চালু" : "বন্ধ")</span>
+                                            <div class="form-check form-switch d-inline-block m-0 align-middle">
+                                                <input class="form-check-input" type="checkbox" role="switch" name="on" value="1" @(item.IsActive ? "checked" : "")
+                                                       onchange="if (confirm('@(item.IsActive ? $"{item.Title} বন্ধ করবেন?" : $"{item.Title} চালু করবেন?")')) this.form.submit(); else this.checked = !this.checked;"
+                                                       title="চালু ↔ বন্ধ" />
+                                            </div>
+                                        </form>
+                                    </td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-outline-green" asp-controller="Admin" asp-action="WhyJoin" asp-route-edit="@item.Id">সম্পাদনা</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</section>

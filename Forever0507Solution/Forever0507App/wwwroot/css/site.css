@@ -662,3 +662,9 @@ a {
   color: rgba(255, 255, 255, .55);
   text-align: center;
 }
+
+/* DB-driven benefit cards show an emoji picked from the admin select */
+.benefit-card__icon--emoji {
+  font-size: 1.7rem;
+  line-height: 1;
+}

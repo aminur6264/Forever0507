@@ -14,6 +14,10 @@ namespace Forever0507App.Controllers
                 .Where(w => w.IsActive)
                 .OrderBy(w => w.Id)
                 .ToListAsync();
+            ViewBag.WhyJoinItems = await db.WhyJoinItems.AsNoTracking()
+                .Where(w => w.IsActive)
+                .OrderBy(w => w.Id)
+                .ToListAsync();
             return View();
         }
 

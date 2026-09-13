@@ -14,6 +14,7 @@ public class AlumniDbContext(DbContextOptions<AlumniDbContext> options) : DbCont
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
     public DbSet<EventSettings> EventSettings => Set<EventSettings>();
     public DbSet<WelcomeNote> WelcomeNotes => Set<WelcomeNote>();
+    public DbSet<WhyJoinItem> WhyJoinItems => Set<WhyJoinItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
