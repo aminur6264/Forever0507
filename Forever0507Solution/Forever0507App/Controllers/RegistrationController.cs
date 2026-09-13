@@ -26,7 +26,9 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
         // Lookup values must exist in the seeded tables (client can only post what we offered).
         if (!string.IsNullOrEmpty(model.District) && !await db.Districts.AnyAsync(d => d.Name == model.District))
             ModelState.AddModelError(nameof(model.District), "সঠিক জেলা নির্বাচন করুন।");
-        if (!string.IsNullOrEmpty(model.PaymentMedium) && !await db.PaymentMediumOptions.AnyAsync(m => m.Name == model.PaymentMedium))
+        // The medium must be one of the MFS names currently offered by an active payment method.
+        if (!string.IsNullOrEmpty(model.PaymentMedium)
+            && !await db.PaymentMethods.AnyAsync(p => p.IsActive && p.MfsName == model.PaymentMedium))
             ModelState.AddModelError(nameof(model.PaymentMedium), "সঠিক ট্রানজেকশন মাধ্যম নির্বাচন করুন।");
         if (!string.IsNullOrEmpty(model.JerseySize) && !await db.JerseySizeOptions.AnyAsync(j => j.Value == model.JerseySize))
             ModelState.AddModelError(nameof(model.JerseySize), "সঠিক জার্সি সাইজ নির্বাচন করুন।");
@@ -121,7 +123,19 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
         ViewBag.Schools = await db.Schools.OrderBy(s => s.Id).ToListAsync();
         ViewBag.Districts = await db.Districts.OrderBy(d => d.DisplayOrder).ToListAsync();
         ViewBag.JerseySizes = await db.JerseySizeOptions.OrderBy(j => j.DisplayOrder).ToListAsync();
-        ViewBag.PaymentMediums = await db.PaymentMediumOptions.OrderBy(m => m.DisplayOrder).ToListAsync();
+
+        // Live committee accounts replace the old static config list — active ones only.
+        var activePaymentMethods = await db.PaymentMethods.AsNoTracking()
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.Id)
+            .ToListAsync();
+        ViewBag.ActivePaymentMethods = activePaymentMethods;
+
+        // The transaction-medium choices mirror those same active accounts (one radio per MFS name).
+        ViewBag.PaymentMediums = activePaymentMethods
+            .Select(p => p.MfsName)
+            .Distinct()
+            .ToList();
     }
 
     private async Task<string> GetJerseyLabelAsync(string value)
