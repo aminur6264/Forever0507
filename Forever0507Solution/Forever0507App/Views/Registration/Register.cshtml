@@ -108,9 +108,12 @@
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="ToAccount" class="form-label"></label>
-                                <input asp-for="ToAccount" class="form-control" inputmode="numeric" maxlength="11" placeholder="01700000000" required />
+                                <select asp-for="ToAccount" id="ToAccount" class="form-select" required disabled
+                                        data-selected="@Model.ToAccount">
+                                    <option value="">— আগে ট্রানজেকশন মাধ্যম নির্বাচন করুন —</option>
+                                </select>
                                 <span asp-validation-for="ToAccount" class="text-danger small"></span>
-                                <div class="form-text">উপরের তালিকার যে কমিটি নম্বরে টাকা পাঠানো হয়েছে।</div>
+                                <div class="form-text">মাধ্যম বেছে নিলে সেই মাধ্যমের কমিটি নম্বরগুলো এখানে দেখা যাবে।</div>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="AmountText" class="form-label"></label>
@@ -168,4 +171,46 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/registration.js" asp-append-version="true"></script>
+    <script id="activeAccountsData" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(((List<PaymentMethod>)ViewBag.ActivePaymentMethods!).Select(p => new { mfs = p.MfsName, number = p.AccountNumber })))</script>
+    <script>
+        (function () {
+            var dataEl = document.getElementById('activeAccountsData');
+            var select = document.getElementById('ToAccount');
+            if (!dataEl || !select) return;
+            var accounts = JSON.parse(dataEl.textContent);
+
+            // After a failed post the model's posted number should survive the rebuild.
+            var pending = select.dataset.selected || '';
+
+            function refresh(resetValue) {
+                var keep = resetValue ? '' : select.value;
+                var chosen = document.querySelector('input[type="radio"][name="PaymentMedium"]:checked');
+
+                select.innerHTML = '';
+                select.add(new Option('— আগে ট্রানজেকশন মাধ্যম নির্বাচন করুন —', ''));
+
+                if (!chosen) {
+                    // No transaction way picked yet — the dropdown stays blocked.
+                    select.disabled = true;
+                    select.value = '';
+                    return;
+                }
+
+                select.disabled = false;
+                accounts
+                    .filter(function (a) { return a.mfs === chosen.value; })
+                    .forEach(function (a) { select.add(new Option(a.number, a.number)); });
+
+                var wanted = pending || keep;
+                pending = '';
+                select.value = wanted;
+                if (select.selectedIndex === -1) select.value = '';
+            }
+
+            document.querySelectorAll('input[type="radio"][name="PaymentMedium"]').forEach(function (radio) {
+                radio.addEventListener('change', function () { refresh(true); });
+            });
+            refresh(false);
+        })();
+    </script>
 }
