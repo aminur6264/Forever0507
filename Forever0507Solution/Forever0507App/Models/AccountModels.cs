@@ -64,12 +64,3 @@ public class CreateUserInputModel
     [Display(Name = "প্রাথমিক পাসওয়ার্ড")]
     public string? Password { get; set; }
 }
-
-public class ResetPasswordInputModel
-{
-    public int Id { get; set; }
-
-    [Required(ErrorMessage = "নতুন পাসওয়ার্ড দিন।")]
-    [Display(Name = "নতুন পাসওয়ার্ড")]
-    public string? NewPassword { get; set; }
-}

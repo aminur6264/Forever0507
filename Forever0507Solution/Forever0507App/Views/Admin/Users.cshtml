@@ -1,0 +1,97 @@
+@using Forever0507App.Controllers
+@{
+    ViewData["Title"] = "ব্যবহারকারী ব্যবস্থাপনা";
+    var users = (List<AppUser>)ViewBag.Users!;
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">ব্যবহারকারী ব্যবস্থাপনা</h1>
+        <p class="page-hero__sub mb-0">নতুন অ্যাকাউন্ট তৈরি, পাসওয়ার্ড রিসেট ও অ্যাকাউন্ট মুছে ফেলা।</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+
+        @if (TempData["Flash"] is string flash)
+        {
+            <div class="alert alert-success rounded-4" role="alert">✓ @flash</div>
+        }
+        @if (TempData["FlashError"] is string flashError)
+        {
+            <div class="alert alert-danger rounded-4" role="alert">✕ @flashError</div>
+        }
+
+        <div class="form-panel mb-4">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">নতুন ব্যবহারকারী তৈরি করুন</h2>
+            <form asp-controller="Admin" asp-action="CreateUser" method="post" class="row g-3 align-items-end" novalidate>
+                <div class="col-md-5">
+                    <label class="form-label" for="Phone">ফোন নম্বর (ইউজারনেম)</label>
+                    <input type="text" name="Phone" id="Phone" class="form-control" maxlength="11" placeholder="01712345678" required />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label" for="Password">প্রাথমিক পাসওয়ার্ড</label>
+                    <input type="text" name="Password" id="Password" class="form-control" placeholder="যেকোনো সহজ পাসওয়ার্ড" required />
+                    <div class="form-text">প্রথম লগইনে ব্যবহারকারী নিজের পাসওয়ার্ড বদলে নেবে।</div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-green w-100">তৈরি করুন</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-panel">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">ব্যবহারকারীগণ</h2>
+            @if (users.Count == 0)
+            {
+                <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো ব্যবহারকারী যোগ করা হয়নি।</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col">ফোন (ইউজারনেম)</th>
+                                <th scope="col">তৈরি</th>
+                                <th scope="col">পাসওয়ার্ড অবস্থা</th>
+                                <th scope="col" style="min-width: 220px;">ব্যবস্থাপনা</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in users)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@user.Phone</td>
+                                    <td>@BengaliText.ToBengaliDigits(user.CreatedAt.ToString("dd MMM yyyy"))</td>
+                                    <td>
+                                        @if (user.MustChangePassword)
+                                        {
+                                            <span class="badge text-bg-warning">পরিবর্তন বাকি</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge text-bg-success">সেট করেছে</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <form asp-controller="Admin" asp-action="ResetPassword" asp-route-id="@user.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('@user.Phone এর পাসওয়ার্ড রিসেট করবেন? নতুন পাসওয়ার্ড হবে তার ইউজারনেম (ফোন নম্বর)ই।');">
+                                            <button type="submit" class="btn btn-sm btn-outline-green text-nowrap">পাসওয়ার্ড রিসেট</button>
+                                        </form>
+                                        <form asp-controller="Admin" asp-action="DeleteUser" method="post" class="d-inline ms-1"
+                                              onsubmit="return confirm('@user.Phone অ্যাকাউন্টটি মুছে ফেলবেন?');">
+                                            <input type="hidden" name="id" value="@user.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">মুছে ফেলুন</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</section>

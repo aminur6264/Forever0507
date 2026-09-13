@@ -50,6 +50,7 @@
                             @if (User.IsInRole(AuthConstants.AdminRole))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Index">ড্যাশবোর্ড</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Users">ব্যবহারকারী</a></li>
                             }
                             else
                             {
