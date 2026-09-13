@@ -85,8 +85,9 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
     // GET /Registration/Card                      → lookup form
     // GET /Registration/Card/REG-2026-0001        → card directly
     // GET /Registration/Card?q=<reg no / phone / txn id>
+    // GET /Registration/Card/REG-2026-0001?print=true → print/PDF layout (auto-opens the print dialog)
     [HttpGet]
-    public async Task<IActionResult> Card(string? id, string? q)
+    public async Task<IActionResult> Card(string? id, string? q, bool print = false)
     {
         Registration? registration = null;
         var query = (id ?? q)?.Trim();
@@ -114,7 +115,7 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
         }
 
         ViewBag.JerseyLabel = await GetJerseyLabelAsync(registration.JerseySize);
-        return View("Card", registration);
+        return print ? View("CardPrint", registration) : View("Card", registration);
     }
 
     /// <summary>Dropdown data, all read from the seeded SQL Server lookup tables.</summary>

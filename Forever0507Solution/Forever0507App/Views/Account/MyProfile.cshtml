@@ -53,7 +53,6 @@
                                         <th scope="col">রেজি. নম্বর</th>
                                         <th scope="col">নাম</th>
                                         <th scope="col">প্রদেয়</th>
-                                        <th scope="col">অবস্থা</th>
                                         <th scope="col"></th>
                                     </tr>
                                 </thead>
@@ -64,9 +63,14 @@
                                             <td class="fw-semibold">@reg.RegistrationNo</td>
                                             <td>@reg.FullName</td>
                                             <td>@BengaliText.Taka(reg.PayableAmount)</td>
-                                            <td><span class="badge @(reg.PaymentStatus == "নিশ্চিত" ? "text-bg-success" : "text-bg-warning")">@reg.PaymentStatus</span></td>
+                                            
                                             <td class="text-end">
                                                 <a class="btn btn-sm btn-outline-green" asp-controller="Registration" asp-action="Card" asp-route-id="@reg.RegistrationNo">কার্ড</a>
+                                                @if (reg.ApprovalStatus == Registration.ApprovalApproved)
+                                                {
+                                                    <a class="btn btn-sm btn-green ms-1" asp-controller="Registration" asp-action="Card"
+                                                       asp-route-id="@reg.RegistrationNo" asp-route-print="true" target="_blank">PDF / প্রিন্ট</a>
+                                                }
                                             </td>
                                         </tr>
                                     }

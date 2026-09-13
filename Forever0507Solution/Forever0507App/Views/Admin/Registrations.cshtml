@@ -41,7 +41,6 @@
                                 <th scope="col">ফ্রম অ্যাকাউন্ট</th>
                                 <th scope="col">টু অ্যাকাউন্ট</th>
                                 <th scope="col">প্রদেয়</th>
-                                <th scope="col">পেমেন্ট</th>
                                 <th scope="col">অনুমোদন</th>
                                 <th scope="col"></th>
                             </tr>
@@ -58,14 +57,7 @@
                                     <td>@reg.FromAccount</td>
                                     <td>@reg.ToAccount</td>
                                     <td>৳@reg.PayableAmount.ToString("N0")</td>
-                                    <td>
-                                        <form asp-controller="Admin" asp-action="TogglePayment" method="post" class="d-inline">
-                                            <input type="hidden" name="id" value="@reg.RegistrationNo" />
-                                            <button type="submit" class="btn btn-sm @(reg.PaymentStatus == AdminController.PaymentVerified ? "btn-outline-secondary" : "btn-outline-green")">
-                                                <span class="badge @(reg.PaymentStatus == AdminController.PaymentVerified ? "text-bg-success" : "text-bg-warning")">@reg.PaymentStatus</span>
-                                            </button>
-                                        </form>
-                                    </td>
+                                    
                                     <td>
                                         <span class="badge @(reg.ApprovalStatus switch
                                         {

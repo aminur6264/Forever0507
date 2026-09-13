@@ -1,0 +1,63 @@
+@{
+    // Bare-bones chrome for printable pages: no navbar, no footer, paper-white background.
+}
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        body {
+            background: #f4efe4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .print-sheet {
+            width: 100%;
+            max-width: 720px;
+        }
+
+        @@media print {
+            @@page {
+                size: A4 portrait;
+                margin: 12mm;
+            }
+
+            body {
+                background: #fff !important;
+                padding: 0;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .reg-card {
+                box-shadow: none !important;
+                max-width: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-sheet">
+        @RenderBody()
+    </div>
+    <script>
+        // Open the browser's print dialog right away — "Save as PDF" is right there in it.
+        window.addEventListener('load', function () {
+            setTimeout(function () { window.print(); }, 400);
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
