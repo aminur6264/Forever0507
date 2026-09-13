@@ -11,6 +11,14 @@ public static class DbSeeder
 {
     public static async Task SeedAsync(AlumniDbContext db, EventOptions eventOptions)
     {
+        // Event settings: created once from appsettings on the very first run, then update-only —
+        // existing rows are never re-seeded or overwritten by config changes.
+        if (!await db.EventSettings.AnyAsync())
+        {
+            db.EventSettings.Add(EventSettings.FromOptions(eventOptions));
+            await db.SaveChangesAsync();
+        }
+
         if (!await db.Districts.AnyAsync())
         {
             db.Districts.AddRange(DistrictNames.Select((name, i) => new District { Name = name, DisplayOrder = i }));

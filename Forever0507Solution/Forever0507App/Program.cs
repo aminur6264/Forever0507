@@ -18,9 +18,12 @@ builder.Services
         options.SlidingExpiration = true;
     });
 
-builder.Services.Configure<EventOptions>(builder.Configuration.GetSection(EventOptions.SectionName));
-// Register the value itself so views can simply @inject EventOptions Event.
-builder.Services.AddSingleton(sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<EventOptions>>().Value);
+// The "Event" section seeds the DB once; afterwards appsettings is only the fallback.
+var configEvent = builder.Configuration.GetSection(EventOptions.SectionName).Get<EventOptions>() ?? new();
+var eventHolder = new EventOptionsHolder(configEvent);
+builder.Services.AddSingleton(eventHolder);
+// Views and services resolve this — it points at the DB-backed values once startup seeding has run.
+builder.Services.AddSingleton(sp => eventHolder.Current);
 
 builder.Services.AddDbContext<AlumniDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
@@ -32,7 +35,12 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AlumniDbContext>();
     db.Database.EnsureCreated();
-    await DbSeeder.SeedAsync(db, app.Services.GetRequiredService<EventOptions>());
+    await DbSeeder.SeedAsync(db, configEvent);
+
+    // From here on the app reads event text from the database, not appsettings.
+    var settings = await db.EventSettings.AsNoTracking()
+        .SingleAsync(s => s.Id == EventSettings.SingleRowId);
+    eventHolder.Current = settings.ToOptions();
 }
 
 // Configure the HTTP request pipeline.

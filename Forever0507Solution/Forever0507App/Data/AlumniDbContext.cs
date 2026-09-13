@@ -12,6 +12,7 @@ public class AlumniDbContext(DbContextOptions<AlumniDbContext> options) : DbCont
     public DbSet<JerseySizeOption> JerseySizeOptions => Set<JerseySizeOption>();
     public DbSet<PaymentMediumOption> PaymentMediumOptions => Set<PaymentMediumOption>();
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
+    public DbSet<EventSettings> EventSettings => Set<EventSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -22,6 +23,12 @@ public class AlumniDbContext(DbContextOptions<AlumniDbContext> options) : DbCont
         });
 
         modelBuilder.Entity<AppUser>().HasIndex(u => u.Phone).IsUnique();
+
+        // Exactly one settings row, seeded with Id = 1 — never identity-generated.
+        modelBuilder.Entity<EventSettings>(entity =>
+        {
+            entity.Property(e => e.Id).ValueGeneratedNever();
+        });
 
         // lookup data — one row per name/value
         modelBuilder.Entity<District>().HasIndex(d => d.Name).IsUnique();
