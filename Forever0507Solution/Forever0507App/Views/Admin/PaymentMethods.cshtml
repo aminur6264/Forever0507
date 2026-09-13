@@ -25,6 +25,73 @@
         }
 
         <div class="form-panel mb-4">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">সারসংক্ষেপ</h2>
+            @{
+                var totalBalance = paymentMethods.Sum(p => p.Balance);
+                var activeCount = paymentMethods.Count(p => p.IsActive);
+                var byMfs = paymentMethods
+                    .GroupBy(p => p.MfsName)
+                    .OrderBy(g => g.Min(p => p.Id));
+            }
+            <div class="row g-3 mb-3">
+                <div class="col-6 col-lg-3">
+                    <div class="stat-tile">
+                        <span class="stat-tile__num">@paymentMethods.Count</span>
+                        <span class="stat-tile__lbl">মোট অ্যাকাউন্ট</span>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="stat-tile">
+                        <span class="stat-tile__num">@activeCount</span>
+                        <span class="stat-tile__lbl">চালু অ্যাকাউন্ট</span>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="stat-tile">
+                        <span class="stat-tile__num">@(paymentMethods.Count - activeCount)</span>
+                        <span class="stat-tile__lbl">বন্ধ অ্যাকাউন্ট</span>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="stat-tile">
+                        <span class="stat-tile__num">৳@totalBalance.ToString("N0")</span>
+                        <span class="stat-tile__lbl">মোট ব্যালেন্স</span>
+                    </div>
+                </div>
+            </div>
+            @if (byMfs.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">এমএফএস নাম</th>
+                                <th scope="col">অ্যাকাউন্ট</th>
+                                <th scope="col">চালু</th>
+                                <th scope="col">মোট ব্যালেন্স</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var group in byMfs)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@group.Key</td>
+                                    <td>@group.Count()</td>
+                                    <td>@group.Count(p => p.IsActive)</td>
+                                    <td>৳@group.Sum(p => p.Balance).ToString("N0")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="mb-0" style="color: var(--brand-muted);">সারসংক্ষেপ দেখানোর মতো কোনো অ্যাকাউন্ট নেই।</p>
+            }
+        </div>
+
+        <div class="form-panel mb-4">
             <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">
                 @(editing is null ? "নতুন পেমেন্ট মাধ্যম যোগ করুন" : $"পেমেন্ট মাধ্যম সম্পাদনা (আইডি {BengaliText.ToBengaliDigits(editing.Id)})")
             </h2>
