@@ -278,6 +278,9 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return RedirectToAction(nameof(Event));
     }
 
+    // GET /Admin/Setup — hub page listing the setup sections.
+    public IActionResult Setup() => View();
+
     // GET /Admin/WelcomeNotes — add/edit form on top, list with status switches below. ?edit=N prefills.
     public async Task<IActionResult> WelcomeNotes(int? edit)
     {
