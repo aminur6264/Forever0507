@@ -32,7 +32,8 @@ public class AdminController(AlumniDbContext db) : Controller
     }
 
     // POST /Admin/ApproveRegistration/5 — one-way. Approval also credits the payable amount
-    // to the payment-method account the money was actually sent to (MFS + account number match).
+    // to the payment-method account the money was sent to, and gives the registrant a system
+    // account: username = their phone, initial password = the phone itself (changed at first login).
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ApproveRegistration(int id)
@@ -46,18 +47,31 @@ public class AdminController(AlumniDbContext db) : Controller
 
             var account = await db.PaymentMethods.FirstOrDefaultAsync(p =>
                 p.MfsName == registration.PaymentMedium && p.AccountNumber == registration.ToAccount);
+            var creditNote = account is not null
+                ? $"৳{registration.PayableAmount:N0} টাকা {account.MfsName} ({account.AccountNumber}) অ্যাকাউন্টে যোগ হয়েছে।"
+                : $"{registration.PaymentMedium} এর {registration.ToAccount} নম্বরের সাথে মিলে যাওয়া কোনো পেমেন্ট অ্যাকাউন্ট নেই, তাই ব্যালেন্স যোগ হয়নি।";
 
             if (account is not null)
-            {
                 account.Balance += registration.PayableAmount;
-                TempData["Flash"] = $"{registration.RegistrationNo} অনুমোদিত — ৳{registration.PayableAmount:N0} টাকা {account.MfsName} ({account.AccountNumber}) অ্যাকাউন্টে যোগ হয়েছে।";
-            }
-            else
+
+            // Registrant's login: username = phone, password = phone until they set their own.
+            var phone = registration.Phone;
+            var userNote = await db.AppUsers.AnyAsync(u => u.Phone == phone)
+                ? "এই নম্বরে ব্যবহারকারী অ্যাকাউন্ট আগেই আছে, নতুন করে তৈরি হয়নি।"
+                : null;
+            if (userNote is null)
             {
-                TempData["Flash"] = $"{registration.RegistrationNo} অনুমোদিত — কিন্তু {registration.PaymentMedium} এর {registration.ToAccount} নম্বরের সাথে মিলে যাওয়া কোনো পেমেন্ট অ্যাকাউন্ট নেই, তাই ব্যালেন্স যোগ হয়নি।";
+                db.AppUsers.Add(new AppUser
+                {
+                    Phone = phone,
+                    PasswordHash = PasswordHasher.Hash(phone),
+                    MustChangePassword = true, // sets their own password at first login
+                });
+                userNote = $"{phone} নম্বরে ব্যবহারকারী অ্যাকাউন্ট তৈরি হয়েছে — প্রথম লগইনে পাসওয়ার্ড বদলাতে বাধ্য হবে।";
             }
 
             await db.SaveChangesAsync();
+            TempData["Flash"] = $"{registration.RegistrationNo} অনুমোদিত — {creditNote} {userNote}";
         }
         return RedirectToAction(nameof(Registrations));
     }
