@@ -13,6 +13,7 @@ public class AlumniDbContext(DbContextOptions<AlumniDbContext> options) : DbCont
     public DbSet<PaymentMediumOption> PaymentMediumOptions => Set<PaymentMediumOption>();
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
     public DbSet<EventSettings> EventSettings => Set<EventSettings>();
+    public DbSet<WelcomeNote> WelcomeNotes => Set<WelcomeNote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

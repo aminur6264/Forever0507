@@ -1,13 +1,19 @@
+using Forever0507App.Data;
 using Forever0507App.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
 namespace Forever0507App.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController(AlumniDbContext db) : Controller
     {
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            ViewBag.WelcomeNotes = await db.WelcomeNotes.AsNoTracking()
+                .Where(w => w.IsActive)
+                .OrderBy(w => w.Id)
+                .ToListAsync();
             return View();
         }
 

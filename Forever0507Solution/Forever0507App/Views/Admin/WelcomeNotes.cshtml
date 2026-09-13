@@ -1,0 +1,103 @@
+@{
+    ViewData["Title"] = "ওয়েলকাম নোট";
+    var notes = (List<WelcomeNote>)ViewBag.WelcomeNotes!;
+    var editing = ViewBag.Editing as WelcomeNote;
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">ওয়েলকাম নোট</h1>
+        <p class="page-hero__sub mb-0">হোম পেজের শুভেচ্ছাবার্তা — চালু নোটগুলোই সাইটে দেখা যাবে।</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+
+        @if (TempData["Flash"] is string flash)
+        {
+            <div class="alert alert-success rounded-4" role="alert">✓ @flash</div>
+        }
+        @if (TempData["FlashError"] is string flashError)
+        {
+            <div class="alert alert-danger rounded-4" role="alert">✕ @flashError</div>
+        }
+
+        <div class="form-panel mb-4">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">
+                @(editing is null ? "নতুন ওয়েলকাম নোট যোগ করুন" : "ওয়েলকাম নোট সম্পাদনা")
+            </h2>
+            <form asp-controller="Admin" asp-action="SaveWelcomeNote" method="post" novalidate>
+                <input type="hidden" name="Id" value="@(editing?.Id ?? 0)" />
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label" for="Message">বার্তা</label>
+                        <textarea name="Message" id="Message" class="form-control" rows="4" required>@editing?.Message</textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="Name">নাম</label>
+                        <input type="text" name="Name" id="Name" class="form-control" required value="@editing?.Name" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="Designation">পদবি</label>
+                        <input type="text" name="Designation" id="Designation" class="form-control" required value="@editing?.Designation" />
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-green px-4">@(editing is null ? "যোগ করুন" : "আপডেট করুন")</button>
+                    @if (editing is not null)
+                    {
+                        <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="WelcomeNotes">নতুন যোগে ফিরুন</a>
+                    }
+                </div>
+            </form>
+        </div>
+
+        <div class="form-panel">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">নোট তালিকা</h2>
+            @if (notes.Count == 0)
+            {
+                <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো নোট যোগ করা হয়নি।</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col">বার্তা</th>
+                                <th scope="col">নাম</th>
+                                <th scope="col">পদবি</th>
+                                <th scope="col">স্ট্যাটাস</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var note in notes)
+                            {
+                                <tr>
+                                    <td style="max-width: 420px;">@(note.Message.Length > 120 ? note.Message[..120] + "…" : note.Message)</td>
+                                    <td class="fw-semibold text-nowrap">@note.Name</td>
+                                    <td class="text-nowrap">@note.Designation</td>
+                                    <td>
+                                        <form asp-controller="Admin" asp-action="ToggleWelcomeNoteStatus" asp-route-id="@note.Id" method="post" class="d-inline align-middle">
+                                            <span class="badge @(note.IsActive ? "text-bg-success" : "text-bg-secondary") me-2">@(note.IsActive ? "চালু" : "বন্ধ")</span>
+                                            <div class="form-check form-switch d-inline-block m-0 align-middle">
+                                                <input class="form-check-input" type="checkbox" role="switch" name="on" value="1" @(note.IsActive ? "checked" : "")
+                                                       onchange="if (confirm('@(note.IsActive ? $"{note.Name} এর নোট বন্ধ করবেন?" : $"{note.Name} এর নোট চালু করবেন?")')) this.form.submit(); else this.checked = !this.checked;"
+                                                       title="চালু ↔ বন্ধ" />
+                                            </div>
+                                        </form>
+                                    </td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-outline-green" asp-controller="Admin" asp-action="WelcomeNotes" asp-route-edit="@note.Id">সম্পাদনা</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</section>

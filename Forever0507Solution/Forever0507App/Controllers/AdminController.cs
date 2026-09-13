@@ -278,6 +278,69 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder)
         return RedirectToAction(nameof(Event));
     }
 
+    // GET /Admin/WelcomeNotes — add/edit form on top, list with status switches below. ?edit=N prefills.
+    public async Task<IActionResult> WelcomeNotes(int? edit)
+    {
+        ViewBag.WelcomeNotes = await db.WelcomeNotes.OrderBy(w => w.Id).ToListAsync();
+        if (edit is int id)
+            ViewBag.Editing = await db.WelcomeNotes.AsNoTracking().FirstOrDefaultAsync(w => w.Id == id);
+        return View();
+    }
+
+    // POST /Admin/SaveWelcomeNote — insert when Id is 0, update otherwise. New notes start active;
+    // the status itself is only changed by the switch in the list.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveWelcomeNote(WelcomeNoteInputModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["FlashError"] = "ফর্মের তথ্য ঠিক নয় — আবার চেষ্টা করুন।";
+            return RedirectToAction(nameof(WelcomeNotes));
+        }
+
+        if (model.Id == 0)
+        {
+            db.WelcomeNotes.Add(new WelcomeNote
+            {
+                Message = model.Message!.Trim(),
+                Name = model.Name!.Trim(),
+                Designation = model.Designation!.Trim(),
+                IsActive = true,
+            });
+        }
+        else
+        {
+            var note = await db.WelcomeNotes.FirstOrDefaultAsync(w => w.Id == model.Id);
+            if (note is null) return NotFound();
+
+            note.Message = model.Message!.Trim();
+            note.Name = model.Name!.Trim();
+            note.Designation = model.Designation!.Trim();
+        }
+        await db.SaveChangesAsync();
+
+        TempData["Flash"] = model.Id == 0 ? "ওয়েলকাম নোট যোগ হয়েছে।" : "ওয়েলকাম নোট আপডেট হয়েছে।";
+        return RedirectToAction(nameof(WelcomeNotes));
+    }
+
+    // POST /Admin/ToggleWelcomeNoteStatus/5 — flip a note between active (home page) and inactive.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleWelcomeNoteStatus(int id)
+    {
+        var note = await db.WelcomeNotes.FirstOrDefaultAsync(w => w.Id == id);
+        if (note is not null)
+        {
+            note.IsActive = !note.IsActive;
+            await db.SaveChangesAsync();
+            TempData["Flash"] = note.IsActive
+                ? $"{note.Name} এর নোট চালু করা হয়েছে।"
+                : $"{note.Name} এর নোট বন্ধ করা হয়েছে।";
+        }
+        return RedirectToAction(nameof(WelcomeNotes));
+    }
+
     // POST /Admin/TogglePayment/REG-2026-0001
     [HttpPost]
     [ValidateAntiForgeryToken]
