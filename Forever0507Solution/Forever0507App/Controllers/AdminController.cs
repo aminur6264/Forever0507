@@ -141,6 +141,79 @@ public class AdminController(AlumniDbContext db) : Controller
         return RedirectToAction(nameof(Users));
     }
 
+    // GET /Admin/PaymentMethods — insert/update form on top, list below. ?edit=N prefills the form.
+    public async Task<IActionResult> PaymentMethods(int? edit)
+    {
+        ViewBag.PaymentMethods = await db.PaymentMethods.OrderBy(p => p.Id).ToListAsync();
+        ViewBag.Mediums = await db.PaymentMediumOptions.OrderBy(m => m.Id).ToListAsync();
+        if (edit is int id)
+            ViewBag.Editing = await db.PaymentMethods.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
+        return View();
+    }
+
+    // POST /Admin/SavePaymentMethod — insert when Id is 0, update otherwise. Balance starts at 0 and is never editable.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SavePaymentMethod(PaymentMethodInputModel model)
+    {
+        if (model.Type is not (PaymentMethod.Personal or PaymentMethod.Merchant))
+            ModelState.AddModelError(nameof(model.Type), "সঠিক টাইপ নির্বাচন করুন।");
+        if (!string.IsNullOrEmpty(model.MfsName)
+            && !await db.PaymentMediumOptions.AnyAsync(m => m.Name == model.MfsName))
+            ModelState.AddModelError(nameof(model.MfsName), "সঠিক এমএফএস নাম নির্বাচন করুন।");
+
+        if (!ModelState.IsValid)
+        {
+            TempData["FlashError"] = "ফর্মের তথ্য ঠিক নয় — আবার চেষ্টা করুন।";
+            return RedirectToAction(nameof(PaymentMethods));
+        }
+
+        if (model.Id == 0)
+        {
+            db.PaymentMethods.Add(new PaymentMethod
+            {
+                AccountName = model.AccountName!.Trim(),
+                AccountNumber = model.AccountNumber!.Trim(),
+                Type = model.Type!,
+                MfsName = model.MfsName!,
+                Balance = 0,
+                IsActive = true,
+            });
+            await db.SaveChangesAsync();
+            TempData["Flash"] = $"{model.MfsName} অ্যাকাউন্ট যোগ হয়েছে।";
+        }
+        else
+        {
+            var paymentMethod = await db.PaymentMethods.FirstOrDefaultAsync(p => p.Id == model.Id);
+            if (paymentMethod is null) return NotFound();
+
+            paymentMethod.AccountName = model.AccountName!.Trim();
+            paymentMethod.AccountNumber = model.AccountNumber!.Trim();
+            paymentMethod.Type = model.Type!;
+            paymentMethod.MfsName = model.MfsName!;
+            await db.SaveChangesAsync(); // Balance deliberately untouched on update
+            TempData["Flash"] = $"{paymentMethod.MfsName} অ্যাকাউন্ট আপডেট হয়েছে।";
+        }
+        return RedirectToAction(nameof(PaymentMethods));
+    }
+
+    // POST /Admin/TogglePaymentMethodStatus/5 — flip a payment method between active and inactive.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> TogglePaymentMethodStatus(int id)
+    {
+        var paymentMethod = await db.PaymentMethods.FirstOrDefaultAsync(p => p.Id == id);
+        if (paymentMethod is not null)
+        {
+            paymentMethod.IsActive = !paymentMethod.IsActive;
+            await db.SaveChangesAsync();
+            TempData["Flash"] = paymentMethod.IsActive
+                ? $"{paymentMethod.MfsName} অ্যাকাউন্ট চালু করা হয়েছে।"
+                : $"{paymentMethod.MfsName} অ্যাকাউন্ট বন্ধ করা হয়েছে।";
+        }
+        return RedirectToAction(nameof(PaymentMethods));
+    }
+
     // POST /Admin/TogglePayment/REG-2026-0001
     [HttpPost]
     [ValidateAntiForgeryToken]

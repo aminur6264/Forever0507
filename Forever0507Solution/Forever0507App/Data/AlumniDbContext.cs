@@ -11,6 +11,7 @@ public class AlumniDbContext(DbContextOptions<AlumniDbContext> options) : DbCont
     public DbSet<School> Schools => Set<School>();
     public DbSet<JerseySizeOption> JerseySizeOptions => Set<JerseySizeOption>();
     public DbSet<PaymentMediumOption> PaymentMediumOptions => Set<PaymentMediumOption>();
+    public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
