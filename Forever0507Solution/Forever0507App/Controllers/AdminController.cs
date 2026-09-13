@@ -31,7 +31,8 @@ public class AdminController(AlumniDbContext db) : Controller
         return View();
     }
 
-    // POST /Admin/ApproveRegistration/5 — one-way: only an undecided (null) registration can be approved.
+    // POST /Admin/ApproveRegistration/5 — one-way. Approval also credits the payable amount
+    // to the payment-method account the money was actually sent to (MFS + account number match).
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ApproveRegistration(int id)
@@ -42,8 +43,21 @@ public class AdminController(AlumniDbContext db) : Controller
             registration.ApprovalStatus = Registration.ApprovalApproved;
             registration.ApprovalBy = User.Identity!.Name; // the deciding admin's username (phone)
             registration.ApprovalAt = DateTime.UtcNow;
+
+            var account = await db.PaymentMethods.FirstOrDefaultAsync(p =>
+                p.MfsName == registration.PaymentMedium && p.AccountNumber == registration.ToAccount);
+
+            if (account is not null)
+            {
+                account.Balance += registration.PayableAmount;
+                TempData["Flash"] = $"{registration.RegistrationNo} অনুমোদিত — ৳{registration.PayableAmount:N0} টাকা {account.MfsName} ({account.AccountNumber}) অ্যাকাউন্টে যোগ হয়েছে।";
+            }
+            else
+            {
+                TempData["Flash"] = $"{registration.RegistrationNo} অনুমোদিত — কিন্তু {registration.PaymentMedium} এর {registration.ToAccount} নম্বরের সাথে মিলে যাওয়া কোনো পেমেন্ট অ্যাকাউন্ট নেই, তাই ব্যালেন্স যোগ হয়নি।";
+            }
+
             await db.SaveChangesAsync();
-            TempData["Flash"] = $"{registration.RegistrationNo} অনুমোদিত হয়েছে — কার্ড এখন দেখা যাবে।";
         }
         return RedirectToAction(nameof(Registrations));
     }
