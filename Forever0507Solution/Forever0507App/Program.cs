@@ -22,8 +22,8 @@ builder.Services
 var configEvent = builder.Configuration.GetSection(EventOptions.SectionName).Get<EventOptions>() ?? new();
 var eventHolder = new EventOptionsHolder(configEvent);
 builder.Services.AddSingleton(eventHolder);
-// Views and services resolve this — it points at the DB-backed values once startup seeding has run.
-builder.Services.AddSingleton(sp => eventHolder.Current);
+// Resolved per request so an admin save (which swaps holder.Current) takes effect immediately.
+builder.Services.AddScoped(sp => eventHolder.Current);
 
 builder.Services.AddDbContext<AlumniDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));

@@ -87,6 +87,80 @@ public class EventSettings
         ContactEmail = ContactEmail,
         PayNote = PayNote,
     };
+
+    /// <summary>Copies editable fields from the form model onto the stored row.</summary>
+    public void UpdateFrom(EventSettingsInputModel m)
+    {
+        CommunityName = m.CommunityName.Trim();
+        EventName = m.EventName.Trim();
+        Tagline = m.Tagline.Trim();
+        CohortLine = m.CohortLine.Trim();
+        SscYear = m.SscYear;
+        EstablishedNote = m.EstablishedNote.Trim();
+        StartTime = m.StartTime;
+        TimeZoneOffset = m.TimeZoneOffset.Trim();
+        Venue = m.Venue.Trim();
+        Address = m.Address.Trim();
+        ContactPhone = m.ContactPhone.Trim();
+        ContactEmail = m.ContactEmail.Trim();
+        PayNote = m.PayNote.Trim();
+    }
+}
+
+/// <summary>Form surface for creating/updating the single EventSettings row.</summary>
+public class EventSettingsInputModel
+{
+    [Required(ErrorMessage = "কমিউনিটির নাম লিখুন।")]
+    [Display(Name = "কমিউনিটি নাম")]
+    public string CommunityName { get; set; } = "";
+
+    [Required(ErrorMessage = "ইভেন্টের নাম লিখুন।")]
+    [Display(Name = "ইভেন্টের নাম")]
+    public string EventName { get; set; } = "";
+
+    [Required(ErrorMessage = "ট্যাগলাইন লিখুন।")]
+    [Display(Name = "ট্যাগলাইন")]
+    public string Tagline { get; set; } = "";
+
+    [Required(ErrorMessage = "ব্যাচ লাইন লিখুন।")]
+    [Display(Name = "ব্যাচ লাইন")]
+    public string CohortLine { get; set; } = "";
+
+    [Range(1990, 2100, ErrorMessage = "সঠিক এসএসসি সাল দিন।")]
+    [Display(Name = "এসএসসি সাল")]
+    public int SscYear { get; set; }
+
+    [Required(ErrorMessage = "প্রতিষ্ঠা নোট লিখুন।")]
+    [Display(Name = "প্রতিষ্ঠা নোট")]
+    public string EstablishedNote { get; set; } = "";
+
+    [Required(ErrorMessage = "শুরুর সময় দিন।")]
+    [Display(Name = "শুরুর সময়")]
+    public DateTime StartTime { get; set; }
+
+    [Required(ErrorMessage = "টাইমজোন অফসেট দিন।")]
+    [Display(Name = "টাইমজোন অফসেট")]
+    public string TimeZoneOffset { get; set; } = "+06:00";
+
+    [Required(ErrorMessage = "ভেন্যু লিখুন।")]
+    [Display(Name = "ভেন্যু")]
+    public string Venue { get; set; } = "";
+
+    [Required(ErrorMessage = "ঠিকানা লিখুন।")]
+    [Display(Name = "ঠিকানা")]
+    public string Address { get; set; } = "";
+
+    [Required(ErrorMessage = "যোগাযোগ ফোন দিন।")]
+    [Display(Name = "যোগাযোগ ফোন")]
+    public string ContactPhone { get; set; } = "";
+
+    [EmailAddress(ErrorMessage = "সঠিক ইমেইল দিন।")]
+    [Display(Name = "যোগাযোগ ইমেইল")]
+    public string ContactEmail { get; set; } = "";
+
+    [Required(ErrorMessage = "পেমেন্ট নোট লিখুন।")]
+    [Display(Name = "পেমেন্ট নোট")]
+    public string PayNote { get; set; } = "";
 }
 
 /// <summary>Program seeds the DB and then swaps <see cref="Current"/> to the DB-backed values; everything resolves through this.</summary>

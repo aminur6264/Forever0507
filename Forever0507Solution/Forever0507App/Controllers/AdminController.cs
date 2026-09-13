@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Forever0507App.Controllers;
 
 [Authorize(Roles = AuthConstants.AdminRole)]
-public class AdminController(AlumniDbContext db) : Controller
+public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder) : Controller
 {
     public const string PaymentVerified = "নিশ্চিত";
     public const string PaymentPending = "যাচাই অপেক্ষমান";
@@ -240,6 +240,42 @@ public class AdminController(AlumniDbContext db) : Controller
                 : $"{paymentMethod.MfsName} অ্যাকাউন্ট বন্ধ করা হয়েছে।";
         }
         return RedirectToAction(nameof(PaymentMethods));
+    }
+
+    // GET /Admin/Event — settings are read-only until আপডেট is clicked (?edit=true). No row → add form.
+    public async Task<IActionResult> Event(bool edit = false)
+    {
+        ViewBag.Settings = await db.EventSettings.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == EventSettings.SingleRowId);
+        ViewBag.Editing = edit;
+        return View();
+    }
+
+    // POST /Admin/SaveEvent — creates the single row when missing, updates it otherwise,
+    // and refreshes the live EventOptions so the whole site reflects the change immediately.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveEvent(EventSettingsInputModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["FlashError"] = "ফর্মের তথ্য ঠিক নয় — আবার চেষ্টা করুন।";
+            return RedirectToAction(nameof(Event));
+        }
+
+        var settings = await db.EventSettings.FirstOrDefaultAsync(s => s.Id == EventSettings.SingleRowId);
+        var isNew = settings is null;
+        if (isNew)
+        {
+            settings = new EventSettings { Id = EventSettings.SingleRowId };
+            db.EventSettings.Add(settings);
+        }
+        settings!.UpdateFrom(model);
+        await db.SaveChangesAsync();
+
+        eventHolder.Current = settings.ToOptions();
+        TempData["Flash"] = isNew ? "ইভেন্ট তথ্য তৈরি হয়েছে।" : "ইভেন্ট তথ্য আপডেট হয়েছে।";
+        return RedirectToAction(nameof(Event));
     }
 
     // POST /Admin/TogglePayment/REG-2026-0001

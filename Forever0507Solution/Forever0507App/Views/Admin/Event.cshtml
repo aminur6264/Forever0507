@@ -1,0 +1,145 @@
+@{
+    ViewData["Title"] = "ইভেন্ট সেটিংস";
+    var settings = ViewBag.Settings as EventSettings;
+    var editing = ViewBag.Editing is true;
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">ইভেন্ট সেটিংস</h1>
+        <p class="page-hero__sub mb-0">সাইট ও কার্ডে ব্যবহৃত ইভেন্টের তথ্য — এখানে বদলালে সাথে সাথে সব জায়গায় বদলাবে।</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+
+        @if (TempData["Flash"] is string flash)
+        {
+            <div class="alert alert-success rounded-4" role="alert">✓ @flash</div>
+        }
+        @if (TempData["FlashError"] is string flashError)
+        {
+            <div class="alert alert-danger rounded-4" role="alert">✕ @flashError</div>
+        }
+
+        @if (settings is not null && !editing)
+        {
+            <div class="form-panel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 fw-bold mb-0" style="color: var(--brand-deep);">বর্তমান তথ্য</h2>
+                    <a class="btn btn-green" asp-controller="Admin" asp-action="Event" asp-route-edit="true">আপডেট করুন</a>
+                </div>
+                <dl class="row mb-0">
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">কমিউনিটি নাম</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">@settings.CommunityName</dd>
+
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">ইভেন্টের নাম</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">@settings.EventName</dd>
+
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">ট্যাগলাইন</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">@settings.Tagline</dd>
+
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">ব্যাচ লাইন</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">@settings.CohortLine</dd>
+
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">এসএসসি সাল</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">@settings.SscYear</dd>
+
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">শুরুর সময়</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">@settings.StartTime.ToString("dd/MM/yyyy HH:mm") (@settings.TimeZoneOffset)</dd>
+
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">ভেন্যু</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">@settings.Venue</dd>
+
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">ঠিকানা</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">@settings.Address</dd>
+
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">প্রতিষ্ঠা নোট</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">@settings.EstablishedNote</dd>
+
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">পেমেন্ট নোট</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">@settings.PayNote</dd>
+
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">যোগাযোগ ফোন</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">@settings.ContactPhone</dd>
+
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">যোগাযোগ ইমেইল</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">@settings.ContactEmail</dd>
+                </dl>
+            </div>
+        }
+        else
+        {
+            <div class="form-panel">
+                <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">
+                    @(settings is null ? "নতুন ইভেন্ট তথ্য যোগ করুন" : "ইভেন্ট তথ্য সম্পাদনা")
+                </h2>
+                <form asp-controller="Admin" asp-action="SaveEvent" method="post" novalidate>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="CommunityName">কমিউনিটি নাম</label>
+                            <input type="text" name="CommunityName" id="CommunityName" class="form-control" required value="@settings?.CommunityName" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="Tagline">ট্যাগলাইন</label>
+                            <input type="text" name="Tagline" id="Tagline" class="form-control" required value="@settings?.Tagline" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="EventName">ইভেন্টের নাম</label>
+                            <input type="text" name="EventName" id="EventName" class="form-control" required value="@settings?.EventName" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="CohortLine">ব্যাচ লাইন</label>
+                            <input type="text" name="CohortLine" id="CohortLine" class="form-control" required value="@settings?.CohortLine" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="SscYear">এসএসসি সাল</label>
+                            <input type="number" name="SscYear" id="SscYear" class="form-control" required value="@settings?.SscYear" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="TimeZoneOffset">টাইমজোন অফসেট</label>
+                            <input type="text" name="TimeZoneOffset" id="TimeZoneOffset" class="form-control" required value="@(settings?.TimeZoneOffset ?? "+06:00")" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="StartTime">শুরুর সময়</label>
+                            <input type="datetime-local" name="StartTime" id="StartTime" class="form-control" required
+                                   value="@(settings?.StartTime.ToString("yyyy-MM-ddTHH:mm"))" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="Venue">ভেন্যু</label>
+                            <input type="text" name="Venue" id="Venue" class="form-control" required value="@settings?.Venue" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="Address">ঠিকানা</label>
+                            <input type="text" name="Address" id="Address" class="form-control" required value="@settings?.Address" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="EstablishedNote">প্রতিষ্ঠা নোট</label>
+                            <textarea name="EstablishedNote" id="EstablishedNote" class="form-control" rows="2" required>@settings?.EstablishedNote</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="PayNote">পেমেন্ট নোট</label>
+                            <textarea name="PayNote" id="PayNote" class="form-control" rows="2" required>@settings?.PayNote</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="ContactPhone">যোগাযোগ ফোন</label>
+                            <input type="text" name="ContactPhone" id="ContactPhone" class="form-control" required value="@settings?.ContactPhone" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="ContactEmail">যোগাযোগ ইমেইল</label>
+                            <input type="email" name="ContactEmail" id="ContactEmail" class="form-control" value="@settings?.ContactEmail" />
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-green px-4">সংরক্ষণ করুন</button>
+                        @if (settings is not null)
+                        {
+                            <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Event">বাতিল</a>
+                        }
+                    </div>
+                </form>
+            </div>
+        }
+    </div>
+</section>
