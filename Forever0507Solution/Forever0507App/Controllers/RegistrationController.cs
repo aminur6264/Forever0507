@@ -101,6 +101,14 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
         ViewBag.Searched = q is not null;
         if (registration is null) return View("CardLookup");
 
+        // Only approved registrations have a viewable card — undecided and rejected never do.
+        if (registration.ApprovalStatus != Registration.ApprovalApproved)
+        {
+            ViewBag.Rejected = registration.ApprovalStatus == Registration.ApprovalRejected;
+            ViewBag.Pending = registration.ApprovalStatus is null;
+            return View("CardLookup");
+        }
+
         ViewBag.JerseyLabel = await GetJerseyLabelAsync(registration.JerseySize);
         return View("Card", registration);
     }

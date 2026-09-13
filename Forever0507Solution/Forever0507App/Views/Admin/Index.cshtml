@@ -1,7 +1,6 @@
 @using Forever0507App.Controllers
 @{
     ViewData["Title"] = "অ্যাডমিন ড্যাশবোর্ড";
-    var registrations = (List<Registration>)ViewBag.Registrations!;
 }
 
 <div class="page-hero">
@@ -48,54 +47,6 @@
                     <span class="stat-tile__lbl">সিস্টেম ব্যবহারকারী</span>
                 </div>
             </div>
-        </div>
-
-        <div class="form-panel">
-            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">সাম্প্রতিক রেজিস্ট্রেশন (সর্বশেষ ৫০)</h2>
-            @if (registrations.Count == 0)
-            {
-                <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো রেজিস্ট্রেশন হয়নি।</p>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                            <tr>
-                                <th scope="col">রেজি. নম্বর</th>
-                                <th scope="col">নাম</th>
-                                <th scope="col">ফোন</th>
-                                <th scope="col">প্রদেয়</th>
-                                <th scope="col">পেমেন্ট</th>
-                                <th scope="col"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var reg in registrations)
-                            {
-                                <tr>
-                                    <td class="fw-semibold">@reg.RegistrationNo</td>
-                                    <td>@reg.FullName</td>
-                                    <td>@reg.Phone</td>
-                                    <td>@BengaliText.Taka(reg.PayableAmount)</td>
-                                    <td>
-                                        <span class="badge @(reg.PaymentStatus == AdminController.PaymentVerified ? "text-bg-success" : "text-bg-warning")">@reg.PaymentStatus</span>
-                                    </td>
-                                    <td class="text-end">
-                                        <form asp-controller="Admin" asp-action="TogglePayment" method="post" class="d-inline">
-                                            <input type="hidden" name="id" value="@reg.RegistrationNo" />
-                                            <button type="submit" class="btn btn-sm @(reg.PaymentStatus == AdminController.PaymentVerified ? "btn-outline-secondary" : "btn-outline-green")">
-                                                @(reg.PaymentStatus == AdminController.PaymentVerified ? "অনিশ্চিত করুন" : "যাচাই করুন")
-                                            </button>
-                                        </form>
-                                        <a class="btn btn-sm btn-outline-secondary" asp-controller="Registration" asp-action="Card" asp-route-id="@reg.RegistrationNo">কার্ড</a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
         </div>
     </div>
 </section>

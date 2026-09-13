@@ -52,5 +52,12 @@ public class Registration
     /// <summary>Committee verifies the transaction after registration.</summary>
     public string PaymentStatus { get; set; } = "যাচাই অপেক্ষমান";
 
+    /// <summary>Null until the admin decides. Once অনুমোদিত/প্রত্যাখ্যাত the decision is final; only approved cards are viewable.</summary>
+    [MaxLength(20)]
+    public string? ApprovalStatus { get; set; }
+
+    public const string ApprovalApproved = "অনুমোদিত";
+    public const string ApprovalRejected = "প্রত্যাখ্যাত";
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

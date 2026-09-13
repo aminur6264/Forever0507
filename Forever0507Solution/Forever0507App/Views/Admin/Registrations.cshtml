@@ -1,0 +1,96 @@
+@using Forever0507App.Controllers
+@{
+    ViewData["Title"] = "রেজিস্ট্রেশন লিস্ট";
+    var registrations = (List<Registration>)ViewBag.Registrations!;
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">রেজিস্ট্রেশন লিস্ট</h1>
+        <p class="page-hero__sub mb-0">সব রেজিস্ট্রেশন — অনুমোদন দিলে কার্ড দেখা যাবে, প্রত্যাখ্যান করলে আর যাবে না।</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+
+        @if (TempData["Flash"] is string flash)
+        {
+            <div class="alert alert-success rounded-4" role="alert">✓ @flash</div>
+        }
+        @if (TempData["FlashError"] is string flashError)
+        {
+            <div class="alert alert-danger rounded-4" role="alert">✕ @flashError</div>
+        }
+
+        <div class="form-panel">
+            @if (registrations.Count == 0)
+            {
+                <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো রেজিস্ট্রেশন হয়নি।</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col">রেজি. নম্বর</th>
+                                <th scope="col">নাম</th>
+                                <th scope="col">ফোন</th>
+                                <th scope="col">প্রদেয়</th>
+                                <th scope="col">পেমেন্ট</th>
+                                <th scope="col">অনুমোদন</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var reg in registrations)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@reg.RegistrationNo</td>
+                                    <td>@reg.FullName</td>
+                                    <td>@reg.Phone</td>
+                                    <td>@BengaliText.Taka(reg.PayableAmount)</td>
+                                    <td>
+                                        <form asp-controller="Admin" asp-action="TogglePayment" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@reg.RegistrationNo" />
+                                            <button type="submit" class="btn btn-sm @(reg.PaymentStatus == AdminController.PaymentVerified ? "btn-outline-secondary" : "btn-outline-green")">
+                                                <span class="badge @(reg.PaymentStatus == AdminController.PaymentVerified ? "text-bg-success" : "text-bg-warning")">@reg.PaymentStatus</span>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <span class="badge @(reg.ApprovalStatus switch
+                                        {
+                                            Registration.ApprovalApproved => "text-bg-success",
+                                            Registration.ApprovalRejected => "text-bg-danger",
+                                            _ => "text-bg-secondary",
+                                        })">@(reg.ApprovalStatus ?? "অপেক্ষমান")</span>
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        @if (reg.ApprovalStatus is null)
+                                        {
+                                            @* Decision is still open — either way is final. *@
+                                            <form asp-controller="Admin" asp-action="ApproveRegistration" asp-route-id="@reg.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('@reg.FullName (@reg.RegistrationNo) কে অনুমোদন করবেন? এটি আর বদলানো যাবে না।');">
+                                                <button type="submit" class="btn btn-sm btn-outline-green">অনুমোদন</button>
+                                            </form>
+                                            <form asp-controller="Admin" asp-action="RejectRegistration" asp-route-id="@reg.Id" method="post" class="d-inline ms-1"
+                                                  onsubmit="return confirm('@reg.FullName (@reg.RegistrationNo) কে প্রত্যাখ্যান করবেন? এটি আর বদলানো যাবে না, কার্ড দেখা যাবে না।');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">প্রত্যাখ্যান</button>
+                                            </form>
+                                        }
+                                        else if (reg.ApprovalStatus == Registration.ApprovalApproved)
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Registration" asp-action="Card" asp-route-id="@reg.RegistrationNo">কার্ড</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</section>

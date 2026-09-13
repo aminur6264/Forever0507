@@ -14,7 +14,19 @@
         <div class="row justify-content-center">
             <div class="col-lg-6">
                 <div class="form-panel">
-                    @if (ViewBag.Searched is true)
+                    @if (ViewBag.Rejected is true)
+                    {
+                        <div class="alert alert-danger rounded-4" role="alert">
+                            দুঃখিত, এই রেজিস্ট্রেশনটি প্রত্যাখ্যাত হয়েছে। বিস্তারিত জানতে আয়োজক কমিটির সাথে যোগাযোগ করুন।
+                        </div>
+                    }
+                    else if (ViewBag.Pending is true)
+                    {
+                        <div class="alert alert-warning rounded-4" role="alert">
+                            আপনার রেজিস্ট্রেশনটি এখনো অনুমোদিত হয়নি। অনুমোদনের পরেই কার্ড দেখা যাবে।
+                        </div>
+                    }
+                    else if (ViewBag.Searched is true)
                     {
                         <div class="alert alert-warning rounded-4" role="alert">
                             দুঃখিত, এই তথ্যে কোনো রেজিস্ট্রেশন পাওয়া যায়নি। নম্বরটি মিলিয়ে আবার চেষ্টা করুন।

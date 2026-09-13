@@ -40,22 +40,12 @@
                 </button>
                 <div class="navbar-collapse collapse d-lg-flex justify-content-end">
                     <ul class="navbar-nav align-items-lg-center gap-lg-1">
-                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">হোম</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="about">ব্যাচ সম্পর্কে</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="event">আয়োজন</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="fees">ফি ও পেমেন্ট</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Registration" asp-action="Card">রেজিস্ট্রেশন কার্ড</a></li>
-                        @if (User.Identity?.IsAuthenticated == true)
+                        @if (User.IsInRole(AuthConstants.AdminRole))
                         {
-                            @if (User.IsInRole(AuthConstants.AdminRole))
-                            {
-                                <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Index">ড্যাশবোর্ড</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Users">ব্যবহারকারী</a></li>
-                            }
-                            else
-                            {
-                                <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="MyProfile">আমার প্রোফাইল</a></li>
-                            }
+                            @* Admins work from the management menus only — public pages stay hidden. *@
+                            <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Index">ড্যাশবোর্ড</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Users">ব্যবহারকারী</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Registrations">রেজিস্ট্রেশন লিস্ট</a></li>
                             <li class="nav-item ms-lg-2">
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                     <button type="submit" class="btn btn-sm btn-outline-light px-3">লগআউট</button>
@@ -64,11 +54,28 @@
                         }
                         else
                         {
-                            <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">লগইন</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">হোম</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="about">ব্যাচ সম্পর্কে</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="event">আয়োজন</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="fees">ফি ও পেমেন্ট</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Registration" asp-action="Card">রেজিস্ট্রেশন কার্ড</a></li>
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="MyProfile">আমার প্রোফাইল</a></li>
+                                <li class="nav-item ms-lg-2">
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-light px-3">লগআউট</button>
+                                    </form>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">লগইন</a></li>
+                            }
+                            <li class="nav-item ms-lg-2">
+                                <a class="btn btn-gold btn-sm px-3" asp-controller="Registration" asp-action="Register">রেজিস্ট্রেশন করুন</a>
+                            </li>
                         }
-                        <li class="nav-item ms-lg-2">
-                            <a class="btn btn-gold btn-sm px-3" asp-controller="Registration" asp-action="Register">রেজিস্ট্রেশন করুন</a>
-                        </li>
                     </ul>
                 </div>
             </div>

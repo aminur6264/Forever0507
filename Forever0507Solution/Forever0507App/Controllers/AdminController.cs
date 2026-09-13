@@ -20,9 +20,45 @@ public class AdminController(AlumniDbContext db) : Controller
         ViewBag.VerifiedCount = await db.Registrations.CountAsync(r => r.PaymentStatus == PaymentVerified);
         ViewBag.TotalPayable = await db.Registrations.SumAsync(r => (decimal?)r.PayableAmount) ?? 0;
         ViewBag.UserCount = await db.AppUsers.CountAsync();
-        ViewBag.Registrations = await db.Registrations.AsNoTracking()
-            .OrderByDescending(r => r.Id).Take(50).ToListAsync();
         return View();
+    }
+
+    // GET /Admin/Registrations — every registration with approve/reject controls.
+    public async Task<IActionResult> Registrations()
+    {
+        ViewBag.Registrations = await db.Registrations.AsNoTracking()
+            .OrderByDescending(r => r.Id).ToListAsync();
+        return View();
+    }
+
+    // POST /Admin/ApproveRegistration/5 — one-way: only an undecided (null) registration can be approved.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveRegistration(int id)
+    {
+        var registration = await db.Registrations.FirstOrDefaultAsync(r => r.Id == id);
+        if (registration is not null && registration.ApprovalStatus is null)
+        {
+            registration.ApprovalStatus = Registration.ApprovalApproved;
+            await db.SaveChangesAsync();
+            TempData["Flash"] = $"{registration.RegistrationNo} অনুমোদিত হয়েছে — কার্ড এখন দেখা যাবে।";
+        }
+        return RedirectToAction(nameof(Registrations));
+    }
+
+    // POST /Admin/RejectRegistration/5 — one-way: only an undecided (null) registration can be rejected.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectRegistration(int id)
+    {
+        var registration = await db.Registrations.FirstOrDefaultAsync(r => r.Id == id);
+        if (registration is not null && registration.ApprovalStatus is null)
+        {
+            registration.ApprovalStatus = Registration.ApprovalRejected;
+            await db.SaveChangesAsync();
+            TempData["Flash"] = $"{registration.RegistrationNo} প্রত্যাখ্যাত হয়েছে — কার্ড আর দেখা যাবে না।";
+        }
+        return RedirectToAction(nameof(Registrations));
     }
 
     // GET /Admin/Users — user management lives on its own page.
