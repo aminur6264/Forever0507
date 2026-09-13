@@ -28,6 +28,13 @@ public class AccountController(AlumniDbContext db) : Controller
     {
         if (!ModelState.IsValid) return View(model);
 
+        // The static admin may sign in through either form on the page.
+        if (model.Phone == AuthConstants.AdminLoginName && model.Password == AuthConstants.AdminPassword)
+        {
+            await SignInAdminAsync();
+            return RedirectToAction("Index", "Admin");
+        }
+
         var user = await db.AppUsers.FirstOrDefaultAsync(u => u.Phone == model.Phone);
         if (user is null || !PasswordHasher.Verify(model.Password!, user.PasswordHash))
         {
@@ -40,22 +47,18 @@ public class AccountController(AlumniDbContext db) : Controller
         return LocalRedirect(returnUrl ?? "/");
     }
 
-    // POST /Account/AdminLogin — the static system admin enters with no credentials by design.
+    // POST /Account/AdminLogin — the static system admin signs in with the fixed credentials in AuthConstants.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AdminLogin()
+    public async Task<IActionResult> AdminLogin(AdminLoginInputModel model)
     {
-        var claims = new List<Claim>
+        if (model.Username?.Trim() != AuthConstants.AdminLoginName || model.Password != AuthConstants.AdminPassword)
         {
-            new(ClaimTypes.NameIdentifier, AuthConstants.AdminLoginName),
-            new(ClaimTypes.Name, AuthConstants.AdminDisplayName),
-            new(ClaimTypes.Role, AuthConstants.AdminRole),
-        };
+            TempData["FlashError"] = "অ্যাডমিন ইউজারনেম বা পাসওয়ার্ড সঠিক নয়।";
+            return RedirectToAction(nameof(Login));
+        }
 
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)));
-
+        await SignInAdminAsync();
         return RedirectToAction("Index", "Admin");
     }
 
@@ -134,6 +137,20 @@ public class AccountController(AlumniDbContext db) : Controller
     // GET /Account/AccessDenied
     [HttpGet]
     public IActionResult AccessDenied() => View();
+
+    private async Task SignInAdminAsync()
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, AuthConstants.AdminLoginName),
+            new(ClaimTypes.Name, AuthConstants.AdminDisplayName),
+            new(ClaimTypes.Role, AuthConstants.AdminRole),
+        };
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)));
+    }
 
     private async Task SignInRegularAsync(AppUser user)
     {

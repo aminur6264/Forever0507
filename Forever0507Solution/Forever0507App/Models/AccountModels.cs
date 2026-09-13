@@ -15,6 +15,18 @@ public class LoginInputModel
     public string? Password { get; set; }
 }
 
+public class AdminLoginInputModel
+{
+    [Required(ErrorMessage = "ইউজারনেম লিখুন।")]
+    [Display(Name = "ইউজারনেম")]
+    public string? Username { get; set; }
+
+    [Required(ErrorMessage = "পাসওয়ার্ড লিখুন।")]
+    [DataType(DataType.Password)]
+    [Display(Name = "পাসওয়ার্ড")]
+    public string? Password { get; set; }
+}
+
 public class ChangePasswordInputModel
 {
     [Required(ErrorMessage = "বর্তমান পাসওয়ার্ড লিখুন।")]
