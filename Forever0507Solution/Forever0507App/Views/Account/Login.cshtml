@@ -1,0 +1,50 @@
+@model LoginInputModel
+@{
+    ViewData["Title"] = "লগইন";
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">লগইন করুন</h1>
+        <p class="page-hero__sub mb-0">নিয়মিত ব্যবহারকারীরা ফোন নম্বর ও পাসওয়ার্ড দিয়ে প্রবেশ করবেন।</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5">
+                <div class="form-panel">
+                    <form asp-controller="Account" asp-action="Login" method="post" novalidate>
+                        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                        <div class="mb-3">
+                            <label asp-for="Phone" class="form-label"></label>
+                            <input asp-for="Phone" class="form-control" inputmode="numeric" maxlength="11" placeholder="01712345678" />
+                            <span asp-validation-for="Phone" class="text-danger small"></span>
+                        </div>
+                        <div class="mb-4">
+                            <label asp-for="Password" class="form-label"></label>
+                            <input asp-for="Password" class="form-control" />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+                        <button type="submit" class="btn btn-green w-100">লগইন</button>
+                    </form>
+
+                    <hr class="my-4" />
+
+                    <p class="text-center small mb-2" style="color: var(--brand-muted);">
+                        শুধুমাত্র সিস্টেম পরিচালকের জন্য:
+                    </p>
+                    <form asp-controller="Account" asp-action="AdminLogin" method="post">
+                        <button type="submit" class="btn btn-gold w-100">সিস্টেম অ্যাডমিন প্রবেশ (প্রমাণপত্র ছাড়া)</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

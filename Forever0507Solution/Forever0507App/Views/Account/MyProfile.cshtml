@@ -1,0 +1,81 @@
+@{
+    ViewData["Title"] = "আমার প্রোফাইল";
+    var registrations = (List<Registration>)ViewBag.Registrations!;
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">আমার প্রোফাইল</h1>
+        <p class="page-hero__sub mb-0">আপনার অ্যাকাউন্ট ও পুনর্মিলনী রেজিস্ট্রেশনের তথ্য।</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+
+                @if (TempData["Flash"] is string flash)
+                {
+                    <div class="alert alert-success rounded-4 mb-4" role="alert">✓ @flash</div>
+                }
+
+                <div class="form-panel mb-4">
+                    <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">অ্যাকাউন্ট তথ্য</h2>
+                    <dl class="row mb-0">
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">ইউজারনেম (ফোন)</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">@User.Identity!.Name</dd>
+
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">অ্যাকাউন্টের ধরন</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">@(ViewBag.IsAdmin is true ? AuthConstants.AdminDisplayName : "সাধারণ ব্যবহারকারী")</dd>
+                    </dl>
+                    <div class="mt-3">
+                        <a class="btn btn-outline-secondary btn-sm" asp-action="ChangePassword">পাসওয়ার্ড পরিবর্তন করুন</a>
+                    </div>
+                </div>
+
+                <div class="form-panel">
+                    <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">আমার রেজিস্ট্রেশনসমূহ</h2>
+
+                    @if (registrations.Count == 0)
+                    {
+                        <p class="mb-3" style="color: var(--brand-muted);">
+                            এই ফোন নম্বরে কোনো রেজিস্ট্রেশন পাওয়া যায়নি।
+                        </p>
+                        <a class="btn btn-green btn-sm" asp-controller="Registration" asp-action="Register">এখনই রেজিস্ট্রেশন করুন</a>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">রেজি. নম্বর</th>
+                                        <th scope="col">নাম</th>
+                                        <th scope="col">প্রদেয়</th>
+                                        <th scope="col">অবস্থা</th>
+                                        <th scope="col"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var reg in registrations)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@reg.RegistrationNo</td>
+                                            <td>@reg.FullName</td>
+                                            <td>@BengaliText.Taka(reg.PayableAmount)</td>
+                                            <td><span class="badge @(reg.PaymentStatus == "নিশ্চিত" ? "text-bg-success" : "text-bg-warning")">@reg.PaymentStatus</span></td>
+                                            <td class="text-end">
+                                                <a class="btn btn-sm btn-outline-green" asp-controller="Registration" asp-action="Card" asp-route-id="@reg.RegistrationNo">কার্ড</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
