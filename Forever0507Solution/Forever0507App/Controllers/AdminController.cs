@@ -442,6 +442,80 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return RedirectToAction(nameof(WhyJoin));
     }
 
+    // GET /Admin/JerseySizes — add/edit form on top, list with status switches below. ?edit=N prefills.
+    public async Task<IActionResult> JerseySizes(int? edit)
+    {
+        ViewBag.JerseySizes = await db.JerseySizeOptions.OrderBy(j => j.DisplayOrder).ToListAsync();
+        if (edit is int id)
+            ViewBag.Editing = await db.JerseySizeOptions.AsNoTracking().FirstOrDefaultAsync(j => j.Id == id);
+        return View();
+    }
+
+    // POST /Admin/SaveJerseySize — insert when Id is 0, update otherwise. Duplicate codes are rejected;
+    // status is only changed by the switch in the list.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveJerseySize(JerseySizeInputModel model)
+    {
+        var value = model.Value?.Trim().ToUpperInvariant();
+
+        if (!ModelState.IsValid)
+        {
+            TempData["FlashError"] = "ফর্মের তথ্য ঠিক নয় — আবার চেষ্টা করুন।";
+            return RedirectToAction(nameof(JerseySizes));
+        }
+
+        if (await db.JerseySizeOptions.AnyAsync(j => j.Value == value && j.Id != model.Id))
+        {
+            TempData["FlashError"] = "এই সাইজ কোড আগেই আছে।";
+            return RedirectToAction(nameof(JerseySizes));
+        }
+
+        if (model.Id == 0)
+        {
+            var maxOrder = await db.JerseySizeOptions.AnyAsync()
+                ? await db.JerseySizeOptions.MaxAsync(j => j.DisplayOrder)
+                : 0;
+            db.JerseySizeOptions.Add(new JerseySizeOption
+            {
+                Value = value!,
+                Label = model.Label!.Trim(),
+                DisplayOrder = maxOrder + 1,
+                IsActive = true,
+            });
+        }
+        else
+        {
+            var size = await db.JerseySizeOptions.FirstOrDefaultAsync(j => j.Id == model.Id);
+            if (size is null) return NotFound();
+
+            size.Value = value!;
+            size.Label = model.Label!.Trim();
+        }
+        await db.SaveChangesAsync();
+
+        TempData["Flash"] = model.Id == 0 ? "জার্সি সাইজ যোগ হয়েছে।" : "জার্সি সাইজ আপডেট হয়েছে।";
+        return RedirectToAction(nameof(JerseySizes));
+    }
+
+    // POST /Admin/ToggleJerseySizeStatus/5 — disabled sizes leave the registration form but old
+    // registrations keep rendering their label.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleJerseySizeStatus(int id)
+    {
+        var size = await db.JerseySizeOptions.FirstOrDefaultAsync(j => j.Id == id);
+        if (size is not null)
+        {
+            size.IsActive = !size.IsActive;
+            await db.SaveChangesAsync();
+            TempData["Flash"] = size.IsActive
+                ? $"{size.Label} চালু করা হয়েছে।"
+                : $"{size.Label} বন্ধ করা হয়েছে।";
+        }
+        return RedirectToAction(nameof(JerseySizes));
+    }
+
     // POST /Admin/TogglePayment/REG-2026-0001
     [HttpPost]
     [ValidateAntiForgeryToken]

@@ -30,7 +30,7 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
         if (!string.IsNullOrEmpty(model.PaymentMedium)
             && !await db.PaymentMethods.AnyAsync(p => p.IsActive && p.MfsName == model.PaymentMedium))
             ModelState.AddModelError(nameof(model.PaymentMedium), "সঠিক ট্রানজেকশন মাধ্যম নির্বাচন করুন।");
-        if (!string.IsNullOrEmpty(model.JerseySize) && !await db.JerseySizeOptions.AnyAsync(j => j.Value == model.JerseySize))
+        if (!string.IsNullOrEmpty(model.JerseySize) && !await db.JerseySizeOptions.AnyAsync(j => j.IsActive && j.Value == model.JerseySize))
             ModelState.AddModelError(nameof(model.JerseySize), "সঠিক জার্সি সাইজ নির্বাচন করুন।");
 
         if (!ModelState.IsValid) return View(model);
@@ -123,7 +123,9 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
     {
         ViewBag.Schools = await db.Schools.OrderBy(s => s.Id).ToListAsync();
         ViewBag.Districts = await db.Districts.OrderBy(d => d.DisplayOrder).ToListAsync();
-        ViewBag.JerseySizes = await db.JerseySizeOptions.OrderBy(j => j.DisplayOrder).ToListAsync();
+        ViewBag.JerseySizes = await db.JerseySizeOptions
+            .Where(j => j.IsActive)
+            .OrderBy(j => j.DisplayOrder).ToListAsync();
 
         // Live committee accounts replace the old static config list — active ones only.
         var activePaymentMethods = await db.PaymentMethods.AsNoTracking()
