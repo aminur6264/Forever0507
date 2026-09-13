@@ -25,28 +25,37 @@ public class RegistrationInputModel : IValidatableObject
     [Display(Name = "আপনার স্কুলের নাম লিখুন")]
     public string? OtherSchoolName { get; set; }
 
-    /// <summary>Free text, digits only; minimum enforced by FeeCalculator.MinAmount.</summary>
-    [Required(ErrorMessage = "টাকার পরিমাণ লিখুন।")]
-    [RegularExpression(@"^\d+(\.\d{1,2})?$", ErrorMessage = "শুধুমাত্র সংখ্যা লিখুন (যেমন: 1500)।")]
-    [Display(Name = "৬. টাকার পরিমাণ (মূল)")]
-    public string? AmountText { get; set; }
-
     [Required(ErrorMessage = "ট্রানজেকশন মাধ্যম নির্বাচন করুন।")]
     [Display(Name = "৫. ট্রানজেকশন মাধ্যম")]
     public string? PaymentMedium { get; set; }
 
+    [Required(ErrorMessage = "যে নম্বর থেকে টাকা পাঠিয়েছেন সেটি লিখুন।")]
+    [RegularExpression(@"^01[3-9]\d{8}$", ErrorMessage = "সঠিক ১১ সংখ্যার মোবাইল নম্বর লিখুন (যেমন: 01712345678)।")]
+    [Display(Name = "৬. কোন নম্বর থেকে পাঠিয়েছেন (ফ্রম অ্যাকাউন্ট)")]
+    public string? FromAccount { get; set; }
+
+    [Required(ErrorMessage = "যে নম্বরে টাকা পাঠিয়েছেন সেটি লিখুন।")]
+    [RegularExpression(@"^01[3-9]\d{8}$", ErrorMessage = "সঠিক ১১ সংখ্যার মোবাইল নম্বর লিখুন (যেমন: 01712345678)।")]
+    [Display(Name = "৭. কোন নম্বরে পাঠিয়েছেন (টু অ্যাকাউন্ট)")]
+    public string? ToAccount { get; set; }
+
+    [Required(ErrorMessage = "টাকার পরিমাণ লিখুন।")]
+    [RegularExpression(@"^\d+(\.\d{1,2})?$", ErrorMessage = "শুধুমাত্র সংখ্যা লিখুন (যেমন: 1500)।")]
+    [Display(Name = "৮. টাকার পরিমাণ (মূল)")]
+    public string? AmountText { get; set; }
+
     [Required(ErrorMessage = "ট্রানজেকশন আইডি লিখুন।")]
     [RegularExpression(@"^[A-Za-z0-9]{4,30}$", ErrorMessage = "ট্রানজেকশন আইডি ৪-৩০ অক্ষরের, শুধু ইংরেজি অক্ষর ও সংখ্যা (যেমন: 9HT7K2XPLM)।")]
-    [Display(Name = "৭. ট্রানজেকশন আইডি")]
+    [Display(Name = "৯. ট্রানজেকশন আইডি")]
     public string? TransactionId { get; set; }
 
     [Required(ErrorMessage = "জার্সি সাইজ নির্বাচন করুন।")]
-    [Display(Name = "৮. জার্সি সাইজ")]
+    [Display(Name = "১০. জার্সি সাইজ")]
     public string? JerseySize { get; set; }
 
     [Required(ErrorMessage = "মোবাইল নম্বর দেওয়া আবশ্যক।")]
     [RegularExpression(@"^01[3-9]\d{8}$", ErrorMessage = "সঠিক ১১ সংখ্যার মোবাইল নম্বর লিখুন (যেমন: 01712345678)।")]
-    [Display(Name = "৯. মোবাইল নম্বর")]
+    [Display(Name = "১১. মোবাইল নম্বর")]
     public string? Phone { get; set; }
 
     /// <summary>Final school name — dropdown value or the typed "other" name. Null when invalid.</summary>

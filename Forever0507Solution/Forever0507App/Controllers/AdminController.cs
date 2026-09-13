@@ -40,6 +40,8 @@ public class AdminController(AlumniDbContext db) : Controller
         if (registration is not null && registration.ApprovalStatus is null)
         {
             registration.ApprovalStatus = Registration.ApprovalApproved;
+            registration.ApprovalBy = User.Identity!.Name; // the deciding admin's username (phone)
+            registration.ApprovalAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
             TempData["Flash"] = $"{registration.RegistrationNo} অনুমোদিত হয়েছে — কার্ড এখন দেখা যাবে।";
         }
@@ -55,6 +57,8 @@ public class AdminController(AlumniDbContext db) : Controller
         if (registration is not null && registration.ApprovalStatus is null)
         {
             registration.ApprovalStatus = Registration.ApprovalRejected;
+            registration.ApprovalBy = User.Identity!.Name; // the deciding admin's username (phone)
+            registration.ApprovalAt = DateTime.UtcNow;
             await db.SaveChangesAsync();
             TempData["Flash"] = $"{registration.RegistrationNo} প্রত্যাখ্যাত হয়েছে — কার্ড আর দেখা যাবে না।";
         }

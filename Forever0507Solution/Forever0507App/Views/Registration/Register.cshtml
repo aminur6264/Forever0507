@@ -85,6 +85,18 @@
                                 <span asp-validation-for="PaymentMedium" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6">
+                                <label asp-for="FromAccount" class="form-label"></label>
+                                <input asp-for="FromAccount" class="form-control" inputmode="numeric" maxlength="11" placeholder="01712345678" required />
+                                <span asp-validation-for="FromAccount" class="text-danger small"></span>
+                                <div class="form-text">যে নম্বর থেকে টাকা পাঠানো হয়েছে।</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ToAccount" class="form-label"></label>
+                                <input asp-for="ToAccount" class="form-control" inputmode="numeric" maxlength="11" placeholder="01700000000" required />
+                                <span asp-validation-for="ToAccount" class="text-danger small"></span>
+                                <div class="form-text">উপরের তালিকার যে কমিটি নম্বরে টাকা পাঠানো হয়েছে।</div>
+                            </div>
+                            <div class="col-md-6">
                                 <label asp-for="AmountText" class="form-label"></label>
                                 <div class="input-group">
                                     <input asp-for="AmountText" class="form-control" inputmode="decimal" id="AmountText" placeholder="যেমন: 1500" />

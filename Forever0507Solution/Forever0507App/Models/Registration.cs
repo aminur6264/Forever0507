@@ -41,6 +41,14 @@ public class Registration
     [MaxLength(30)]
     public string TransactionId { get; set; } = "";
 
+    /// <summary>Wallet number the money was sent from (registrant's account).</summary>
+    [MaxLength(11)]
+    public string FromAccount { get; set; } = "";
+
+    /// <summary>Wallet number the money was sent to (committee's account).</summary>
+    [MaxLength(11)]
+    public string ToAccount { get; set; } = "";
+
     /// <summary>S / M / L / XL / XXL (see Helpers.JerseySize).</summary>
     [MaxLength(5)]
     public string JerseySize { get; set; } = "";
@@ -55,6 +63,13 @@ public class Registration
     /// <summary>Null until the admin decides. Once অনুমোদিত/প্রত্যাখ্যাত the decision is final; only approved cards are viewable.</summary>
     [MaxLength(20)]
     public string? ApprovalStatus { get; set; }
+
+    /// <summary>Who decided — admin's username (phone) or the static admin's display name; null while undecided.</summary>
+    [MaxLength(50)]
+    public string? ApprovalBy { get; set; }
+
+    /// <summary>UTC instant of the approve/reject decision; null while undecided.</summary>
+    public DateTime? ApprovalAt { get; set; }
 
     public const string ApprovalApproved = "অনুমোদিত";
     public const string ApprovalRejected = "প্রত্যাখ্যাত";
