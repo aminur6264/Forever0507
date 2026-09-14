@@ -16,9 +16,10 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
     // GET /Admin
     public async Task<IActionResult> Index()
     {
-        ViewBag.TotalRegistrations = await db.Registrations.CountAsync();
+
+        ViewBag.TotalRegistrations = await db.Registrations.CountAsync(r => r.ApprovalStatus == Registration.ApprovalApproved);
         ViewBag.VerifiedCount = await db.Registrations.CountAsync(r => r.PaymentStatus == PaymentVerified);
-        ViewBag.TotalPayable = await db.Registrations.SumAsync(r => (decimal?)r.PayableAmount) ?? 0;
+        ViewBag.TotalPayable = await db.PaymentMethods.SumAsync(p => (decimal?)p.Balance) ?? 0;
         ViewBag.UserCount = await db.AppUsers.CountAsync();
         return View();
     }
