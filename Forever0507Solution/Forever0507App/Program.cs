@@ -35,6 +35,18 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AlumniDbContext>();
     db.Database.EnsureCreated();
+
+    // EnsureCreated never alters an existing database — back-fill the FullName column
+    // (added after first release) so older databases keep working without migrations.
+    var hasFullName = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'AppUsers') AND name = N'FullName'")
+        .SingleAsync();
+    if (hasFullName == 0)
+    {
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE AppUsers ADD FullName nvarchar(120) NOT NULL CONSTRAINT DF_AppUsers_FullName DEFAULT N''");
+    }
+
     await DbSeeder.SeedAsync(db, configEvent);
 
     // From here on the app reads event text from the database, not appsettings.

@@ -7,6 +7,10 @@ public class AppUser
 {
     public int Id { get; set; }
 
+    /// <summary>Display name. Required for new accounts; legacy rows may be blank.</summary>
+    [MaxLength(120)]
+    public string FullName { get; set; } = "";
+
     /// <summary>Login username — an 11-digit BD mobile number.</summary>
     [MaxLength(11)]
     public string Phone { get; set; } = "";

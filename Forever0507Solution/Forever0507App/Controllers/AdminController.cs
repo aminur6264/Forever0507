@@ -94,10 +94,23 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return RedirectToAction(nameof(Registrations));
     }
 
-    // GET /Admin/Users — user management lives on its own page.
-    public async Task<IActionResult> Users()
+    // GET /Admin/Users?search=&role= — user list with an optional name/phone search and role filter.
+    public async Task<IActionResult> Users(string? search, string? role)
     {
-        ViewBag.Users = await db.AppUsers.OrderBy(u => u.Id).ToListAsync();
+        var users = db.AppUsers.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            users = users.Where(u => u.FullName.Contains(term) || u.Phone.Contains(term));
+        }
+
+        if (role == "admin") users = users.Where(u => u.IsAdmin);
+        else if (role == "regular") users = users.Where(u => !u.IsAdmin);
+
+        ViewBag.Users = await users.OrderBy(u => u.Id).ToListAsync();
+        ViewBag.Search = search ?? "";
+        ViewBag.Role = role ?? "";
         return View();
     }
 
@@ -108,7 +121,7 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
     {
         if (!ModelState.IsValid)
         {
-            TempData["FlashError"] = "ফোন নম্বর বা পাসওয়ার্ড ঠিক নয় — আবার চেষ্টা করুন।";
+            TempData["FlashError"] = "নাম, ফোন নম্বর বা পাসওয়ার্ড ঠিক নয় — আবার চেষ্টা করুন।";
             return RedirectToAction(nameof(Users));
         }
 
@@ -120,6 +133,7 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
 
         db.AppUsers.Add(new AppUser
         {
+            FullName = model.FullName!.Trim(),
             Phone = model.Phone!,
             PasswordHash = PasswordHasher.Hash(model.Password!),
             // Regular users set their own password at first login; admins already chose it here,
@@ -130,8 +144,8 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         await db.SaveChangesAsync();
 
         TempData["Flash"] = model.IsAdmin
-            ? $"{model.Phone} নম্বরে নতুন অ্যাডমিন অ্যাকাউন্ট তৈরি হয়েছে।"
-            : $"{model.Phone} নম্বরে নতুন অ্যাকাউন্ট তৈরি হয়েছে। প্রথম লগইনে সে পাসওয়ার্ড বদলাতে বাধ্য হবে।";
+            ? $"{model.FullName!.Trim()} ({model.Phone}) নম্বরে নতুন অ্যাডমিন অ্যাকাউন্ট তৈরি হয়েছে।"
+            : $"{model.FullName!.Trim()} ({model.Phone}) নম্বরে নতুন অ্যাকাউন্ট তৈরি হয়েছে। প্রথম লগইনে সে পাসওয়ার্ড বদলাতে বাধ্য হবে।";
         return RedirectToAction(nameof(Users));
     }
 

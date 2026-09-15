@@ -55,6 +55,11 @@ public class ChangePasswordInputModel
 
 public class CreateUserInputModel
 {
+    [Required(ErrorMessage = "ব্যবহারকারীর পুরো নাম লিখুন।")]
+    [StringLength(120, MinimumLength = 3, ErrorMessage = "নাম কমপক্ষে ৩ অক্ষরের হতে হবে।")]
+    [Display(Name = "পুরো নাম")]
+    public string? FullName { get; set; }
+
     [Required(ErrorMessage = "ফোন নম্বর লিখুন।")]
     [RegularExpression(@"^01[3-9]\d{8}$", ErrorMessage = "সঠিক ১১ সংখ্যার মোবাইল নম্বর লিখুন (যেমন: 01712345678)।")]
     [Display(Name = "ফোন নম্বর (ইউজারনেম)")]

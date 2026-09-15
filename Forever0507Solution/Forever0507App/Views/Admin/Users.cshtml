@@ -2,6 +2,9 @@
 @{
     ViewData["Title"] = "ব্যবহারকারী ব্যবস্থাপনা";
     var users = (List<AppUser>)ViewBag.Users!;
+    var search = (string?)ViewBag.Search ?? "";
+    var role = (string?)ViewBag.Role ?? "";
+    var hasFilter = search != "" || role != "";
 }
 
 <div class="page-hero">
@@ -26,11 +29,15 @@
         <div class="form-panel mb-4">
             <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">নতুন ব্যবহারকারী তৈরি করুন</h2>
             <form asp-controller="Admin" asp-action="CreateUser" method="post" class="row g-3 align-items-end" novalidate>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <label class="form-label" for="FullName">পুরো নাম</label>
+                    <input type="text" name="FullName" id="FullName" class="form-control" maxlength="120" placeholder="যেমন: রাকিব হাসান" required />
+                </div>
+                <div class="col-md-3">
                     <label class="form-label" for="Phone">ফোন নম্বর (ইউজারনেম)</label>
                     <input type="text" name="Phone" id="Phone" class="form-control" maxlength="11" placeholder="01712345678" required />
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-2">
                     <label class="form-label" for="Password">প্রাথমিক পাসওয়ার্ড</label>
                     <input type="text" name="Password" id="Password" class="form-control" placeholder="যেকোনো সহজ পাসওয়ার্ড" required />
                     <div class="form-text">প্রথম লগইনে ব্যবহারকারী নিজের পাসওয়ার্ড বদলে নেবে।</div>
@@ -48,11 +55,33 @@
             </form>
         </div>
 
+        <div class="form-panel mb-4">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">ফিল্টার</h2>
+            <form asp-controller="Admin" asp-action="Users" method="get" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label" for="search">নাম বা ফোন নম্বর</label>
+                    <input type="text" name="search" id="search" class="form-control" value="@search" placeholder="পুরো নাম বা ফোন নম্বর দিয়ে খুঁজুন" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="role">রোল</label>
+                    <select name="role" id="role" class="form-select">
+                        <option value="">সব</option>
+                        <option value="admin" selected="@(role == "admin")">অ্যাডমিন</option>
+                        <option value="regular" selected="@(role == "regular")">রেগুলার</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-green">ফিল্টার করুন</button>
+                    <a asp-controller="Admin" asp-action="Users" class="btn btn-outline-secondary">রিসেট</a>
+                </div>
+            </form>
+        </div>
+
         <div class="form-panel">
             <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">ব্যবহারকারীগণ</h2>
             @if (users.Count == 0)
             {
-                <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো ব্যবহারকারী যোগ করা হয়নি।</p>
+                <p class="mb-0" style="color: var(--brand-muted);">@(hasFilter ? "ফিল্টারের সাথে মেলে এমন কোনো ব্যবহারকারী পাওয়া যায়নি।" : "এখনো কোনো ব্যবহারকারী যোগ করা হয়নি।")</p>
             }
             else
             {
@@ -60,6 +89,7 @@
                     <table class="table align-middle">
                         <thead>
                             <tr>
+                                <th scope="col">পুরো নাম</th>
                                 <th scope="col">ফোন (ইউজারনেম)</th>
                                 <th scope="col">তৈরি</th>
                                 <th scope="col">রোল</th>
@@ -71,7 +101,17 @@
                             @foreach (var user in users)
                             {
                                 <tr>
-                                    <td class="fw-semibold">@user.Phone</td>
+                                    <td class="fw-semibold">
+                                        @if (string.IsNullOrWhiteSpace(user.FullName))
+                                        {
+                                            <span style="color: var(--brand-muted);">—</span>
+                                        }
+                                        else
+                                        {
+                                            @user.FullName
+                                        }
+                                    </td>
+                                    <td>@user.Phone</td>
                                     <td>@BengaliText.ToBengaliDigits(user.CreatedAt.ToString("dd MMM yyyy"))</td>
                                     <td>
                                         <span class="badge @(user.IsAdmin ? "text-bg-dark" : "text-bg-secondary")">@(user.IsAdmin ? "অ্যাডমিন" : "রেগুলার")</span>
