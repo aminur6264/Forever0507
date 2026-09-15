@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "রেজিস্ট্রেশন লিস্ট";
     var registrations = (List<Registration>)ViewBag.Registrations!;
+    var approverNames = (Dictionary<string, string>)ViewBag.ApproverNames!;
 }
 
 <div class="page-hero">
@@ -67,8 +68,9 @@
                                         })">@(reg.ApprovalStatus ?? "অপেক্ষমান")</span>
                                         @if (reg.ApprovalAt is DateTime decidedAt)
                                         {
+                                            var approver = approverNames.GetValueOrDefault(reg.ApprovalBy ?? "", reg.ApprovalBy ?? "—");
                                             <div class="small text-muted mt-1 text-nowrap">
-                                                @reg.ApprovalBy · @decidedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                @approver · @decidedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                                             </div>
                                         }
                                     </td>

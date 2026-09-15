@@ -29,6 +29,11 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
     {
         ViewBag.Registrations = await db.Registrations.AsNoTracking()
             .OrderByDescending(r => r.Id).ToListAsync();
+        // Approver display names, keyed by phone — regular-admin logins store the phone in ApprovalBy,
+        // while the static admin stores its display name already (no row here, falls back to it).
+        ViewBag.ApproverNames = await db.AppUsers.AsNoTracking()
+            .Where(u => u.FullName != "")
+            .ToDictionaryAsync(u => u.Phone, u => u.FullName);
         return View();
     }
 
@@ -64,8 +69,9 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             {
                 db.AppUsers.Add(new AppUser
                 {
-                    Phone = phone,
-                    PasswordHash = PasswordHasher.Hash(phone),
+                    FullName = registration.FullName.Trim(),
+                    Phone = phone.Trim(),
+                    PasswordHash = PasswordHasher.Hash(phone.Trim()),
                     MustChangePassword = true, // sets their own password at first login
                 });
                 userNote = $"{phone} নম্বরে ব্যবহারকারী অ্যাকাউন্ট তৈরি হয়েছে — প্রথম লগইনে পাসওয়ার্ড বদলাতে বাধ্য হবে।";
