@@ -22,6 +22,10 @@ public class EventSettings
     [MaxLength(200)]
     public string Tagline { get; set; } = "";
 
+    /// <summary>Uploaded logo under /uploads/logo, shown in the navbar and hero. Null → the built-in ০৫ mark is drawn instead.</summary>
+    [MaxLength(200)]
+    public string? LogoUrl { get; set; }
+
     [MaxLength(120)]
     public string CohortLine { get; set; } = "";
 
@@ -58,6 +62,7 @@ public class EventSettings
         CommunityName = o.CommunityName,
         EventName = o.EventName,
         Tagline = o.Tagline,
+        LogoUrl = o.LogoUrl,
         CohortLine = o.CohortLine,
         SscYear = o.SscYear,
         EstablishedNote = o.EstablishedNote,
@@ -76,6 +81,7 @@ public class EventSettings
         CommunityName = CommunityName,
         EventName = EventName,
         Tagline = Tagline,
+        LogoUrl = LogoUrl ?? "",
         CohortLine = CohortLine,
         SscYear = SscYear,
         EstablishedNote = EstablishedNote,

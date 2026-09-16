@@ -47,6 +47,16 @@ using (var scope = app.Services.CreateScope())
             $"ALTER TABLE AppUsers ADD FullName nvarchar(120) NOT NULL CONSTRAINT DF_AppUsers_FullName DEFAULT N''");
     }
 
+    // Same back-fill for the EventSettings logo column (added after first release).
+    var hasLogo = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'EventSettings') AND name = N'LogoUrl'")
+        .SingleAsync();
+    if (hasLogo == 0)
+    {
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE EventSettings ADD LogoUrl nvarchar(200) NULL");
+    }
+
     await DbSeeder.SeedAsync(db, configEvent);
 
     // From here on the app reads event text from the database, not appsettings.
@@ -77,7 +87,7 @@ app.Use(async (context, next) =>
     var isAllowedPath =
         path.StartsWithSegments("/Account") ||
         path.StartsWithSegments("/css") || path.StartsWithSegments("/js") || path.StartsWithSegments("/lib") ||
-        path.StartsWithSegments("/images") || path.StartsWithSegments("/favicon") ||
+        path.StartsWithSegments("/images") || path.StartsWithSegments("/uploads") || path.StartsWithSegments("/favicon") ||
         path.StartsWithSegments("/Forever0507App.styles.css");
 
     if (context.User.Identity?.IsAuthenticated == true
@@ -90,6 +100,10 @@ app.Use(async (context, next) =>
 
     await next();
 });
+
+// MapStaticAssets serves only build-time manifest files — runtime uploads (logo, welcome
+// photos) need the physical-file provider too.
+app.UseStaticFiles();
 
 app.MapStaticAssets();
 

@@ -11,6 +11,9 @@ public class EventOptions
     public string EventName { get; set; } = "";
     public string Tagline { get; set; } = "";
 
+    /// <summary>Uploaded logo under /uploads/logo, shown in the navbar and hero. Empty → the built-in ০৫ mark is drawn instead.</summary>
+    public string LogoUrl { get; set; } = "";
+
     /// <summary>e.g. "এসএসসি ২০০৫ · এইচএসসি ২০০৭".</summary>
     public string CohortLine { get; set; } = "";
 

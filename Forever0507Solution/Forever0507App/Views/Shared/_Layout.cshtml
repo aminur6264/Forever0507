@@ -18,17 +18,24 @@
         <nav class="navbar navbar-expand-lg navbar-dark site-nav sticky-top">
             <div class="container">
                 <a class="navbar-brand d-flex align-items-center gap-2" asp-area="" asp-controller="Home" asp-action="Index">
-                    <svg class="brand-mark" viewBox="0 0 48 48" role="img" aria-hidden="true">
-                        <defs>
-                            <linearGradient id="bm-g" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0" stop-color="#146b4a" />
-                                <stop offset="1" stop-color="#d4a017" />
-                            </linearGradient>
-                        </defs>
-                        <circle cx="24" cy="24" r="22" fill="url(#bm-g)" />
-                        <circle cx="24" cy="24" r="18.5" fill="none" stroke="#faf7f0" stroke-width="1.5" opacity=".85" />
-                        <text x="24" y="29" text-anchor="middle" font-size="13" fill="#faf7f0" font-family="'Noto Serif Bengali', serif" font-weight="700">০৫</text>
-                    </svg>
+                    @if (!string.IsNullOrEmpty(Event.LogoUrl))
+                    {
+                        <img src="@Event.LogoUrl" alt="@Event.CommunityName" class="brand-mark brand-mark--img" />
+                    }
+                    else
+                    {
+                        <svg class="brand-mark" viewBox="0 0 48 48" role="img" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="bm-g" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0" stop-color="#146b4a" />
+                                    <stop offset="1" stop-color="#d4a017" />
+                                </linearGradient>
+                            </defs>
+                            <circle cx="24" cy="24" r="22" fill="url(#bm-g)" />
+                            <circle cx="24" cy="24" r="18.5" fill="none" stroke="#faf7f0" stroke-width="1.5" opacity=".85" />
+                            <text x="24" y="29" text-anchor="middle" font-size="13" fill="#faf7f0" font-family="'Noto Serif Bengali', serif" font-weight="700">০৫</text>
+                        </svg>
+                    }
                     <span class="brand-text">
                         <span class="brand-text__name">@Event.CommunityName</span>
                         <small class="brand-text__tag">@Event.Tagline</small>

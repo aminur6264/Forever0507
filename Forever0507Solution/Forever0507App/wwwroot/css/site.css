@@ -128,6 +128,12 @@ a {
   flex: 0 0 auto;
 }
 
+/* Uploaded logo takes the same round slot as the built-in mark. */
+.brand-mark--img {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .brand-text {
   display: flex;
   flex-direction: column;
@@ -189,6 +195,20 @@ a {
   width: 110px;
   height: 110px;
   filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .35));
+}
+
+.hero__logo--img {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Small round thumbnail on the event-settings page. */
+.event-logo-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, .1);
 }
 
 .hero__eyebrow {

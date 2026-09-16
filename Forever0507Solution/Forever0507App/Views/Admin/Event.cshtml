@@ -31,6 +31,18 @@
                     <a class="btn btn-green" asp-controller="Admin" asp-action="Event" asp-route-edit="true">আপডেট করুন</a>
                 </div>
                 <dl class="row mb-0">
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">লোগো</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">
+                        @if (!string.IsNullOrEmpty(settings.LogoUrl))
+                        {
+                            <img src="@settings.LogoUrl" alt="লোগো" class="event-logo-preview" />
+                        }
+                        else
+                        {
+                            <span style="color: var(--brand-muted);">নেই — ডিফল্ট ০৫ প্রতীক দেখানো হচ্ছে</span>
+                        }
+                    </dd>
+
                     <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">কমিউনিটি নাম</dt>
                     <dd class="col-7 col-sm-9 fw-semibold">@settings.CommunityName</dd>
 
@@ -75,8 +87,24 @@
                 <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">
                     @(settings is null ? "নতুন ইভেন্ট তথ্য যোগ করুন" : "ইভেন্ট তথ্য সম্পাদনা")
                 </h2>
-                <form asp-controller="Admin" asp-action="SaveEvent" method="post" novalidate>
+                <form asp-controller="Admin" asp-action="SaveEvent" method="post" enctype="multipart/form-data" novalidate>
                     <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label" for="logo">লোগো</label>
+                            <div class="d-flex align-items-center gap-3 flex-wrap">
+                                @if (!string.IsNullOrEmpty(settings?.LogoUrl))
+                                {
+                                    <img src="@settings.LogoUrl" alt="বর্তমান লোগো" class="event-logo-preview" />
+                                    <span class="form-text mb-0">বর্তমান লোগো — নতুন ছবি দিলে বদলে যাবে।</span>
+                                }
+                                else
+                                {
+                                    <span class="form-text mb-0">এখনো লোগো দেওয়া হয়নি — ডিফল্ট ০৫ প্রতীক দেখানো হচ্ছে।</span>
+                                }
+                            </div>
+                            <input type="file" name="logo" id="logo" class="form-control mt-2" accept=".jpg,.jpeg,.png,.webp" />
+                            <div class="form-text">jpg/png/webp, সর্বোচ্চ ২ এমবি। না দিলে বর্তমান লোগোই থাকবে।</div>
+                        </div>
                         <div class="col-md-6">
                             <label class="form-label" for="CommunityName">কমিউনিটি নাম</label>
                             <input type="text" name="CommunityName" id="CommunityName" class="form-control" required value="@settings?.CommunityName" />

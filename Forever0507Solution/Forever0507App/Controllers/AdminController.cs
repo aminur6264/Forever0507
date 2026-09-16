@@ -313,14 +313,35 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
 
     // POST /Admin/SaveEvent — creates the single row when missing, updates it otherwise,
     // and refreshes the live EventOptions so the whole site reflects the change immediately.
+    // An optional logo (jpg/png/webp, ≤ 2 MB) is stored under wwwroot/uploads/logo and
+    // replaces any previous one; no file → the current logo is kept.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveEvent(EventSettingsInputModel model)
+    public async Task<IActionResult> SaveEvent(EventSettingsInputModel model, IFormFile? logo)
     {
         if (!ModelState.IsValid)
         {
             TempData["FlashError"] = "ফর্মের তথ্য ঠিক নয় — আবার চেষ্টা করুন।";
             return RedirectToAction(nameof(Event));
+        }
+
+        string? logoUrl = null;
+        if (logo is { Length: > 0 })
+        {
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var ext = Path.GetExtension(logo.FileName).ToLowerInvariant();
+            if (!allowed.Contains(ext) || logo.Length > 2 * 1024 * 1024)
+            {
+                TempData["FlashError"] = "লোগো হতে হবে jpg/png/webp এবং সর্বোচ্চ ২ এমবি।";
+                return RedirectToAction(nameof(Event));
+            }
+
+            var folder = Path.Combine(env.WebRootPath, "uploads", "logo");
+            Directory.CreateDirectory(folder);
+            var fileName = $"{Guid.NewGuid():N}{ext}";
+            await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
+            await logo.CopyToAsync(stream);
+            logoUrl = $"/uploads/logo/{fileName}";
         }
 
         var settings = await db.EventSettings.FirstOrDefaultAsync(s => s.Id == EventSettings.SingleRowId);
@@ -331,11 +352,30 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             db.EventSettings.Add(settings);
         }
         settings!.UpdateFrom(model);
+        if (logoUrl is not null)
+        {
+            DeleteEventLogo(settings.LogoUrl); // replace the old file only after a new one is in hand
+            settings.LogoUrl = logoUrl;
+        }
         await db.SaveChangesAsync();
 
         eventHolder.Current = settings.ToOptions();
         TempData["Flash"] = isNew ? "ইভেন্ট তথ্য তৈরি হয়েছে।" : "ইভেন্ট তথ্য আপডেট হয়েছে।";
         return RedirectToAction(nameof(Event));
+    }
+
+    private void DeleteEventLogo(string? logoUrl)
+    {
+        if (string.IsNullOrEmpty(logoUrl)) return;
+        try
+        {
+            var full = Path.Combine(env.WebRootPath, logoUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
+        }
+        catch (IOException)
+        {
+            // best effort — a stale file in uploads is harmless
+        }
     }
 
     // GET /Admin/Setup — hub page listing the setup sections.
