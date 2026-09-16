@@ -3,6 +3,15 @@
     ViewData["Title"] = "রেজিস্ট্রেশন লিস্ট";
     var registrations = (List<Registration>)ViewBag.Registrations!;
     var approverNames = (Dictionary<string, string>)ViewBag.ApproverNames!;
+    var mediums = (List<string>)ViewBag.Mediums!;
+    var approvers = (List<string>)ViewBag.Approvers!;
+    var phone = (string?)ViewBag.Phone ?? "";
+    var medium = (string?)ViewBag.Medium ?? "";
+    var fromAccount = (string?)ViewBag.From ?? "";
+    var toAccount = (string?)ViewBag.To ?? "";
+    var status = (string?)ViewBag.Status ?? "";
+    var approverFilter = (string?)ViewBag.Approver ?? "";
+    var hasFilter = phone != "" || medium != "" || fromAccount != "" || toAccount != "" || status != "" || approverFilter != "";
 }
 
 <div class="page-hero">
@@ -24,10 +33,61 @@
             <div class="alert alert-danger rounded-4" role="alert">✕ @flashError</div>
         }
 
+        <div class="form-panel mb-4">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">ফিল্টার</h2>
+            <form asp-controller="Admin" asp-action="Registrations" method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label" for="phone">ফোন নম্বর</label>
+                    <input type="text" name="phone" id="phone" class="form-control" value="@phone" placeholder="যেকোনো অংশ দিয়ে খুঁজুন" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="medium">পেমেন্ট মাধ্যম</label>
+                    <select name="medium" id="medium" class="form-select">
+                        <option value="">সব</option>
+                        @foreach (var m in mediums)
+                        {
+                            <option value="@m" selected="@(medium == m)">@m</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="fromAccount">ফ্রম অ্যাকাউন্ট</label>
+                    <input type="text" name="fromAccount" id="fromAccount" class="form-control" value="@fromAccount" placeholder="যেকোনো অংশ দিয়ে খুঁজুন" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="toAccount">টু অ্যাকাউন্ট</label>
+                    <input type="text" name="toAccount" id="toAccount" class="form-control" value="@toAccount" placeholder="যেকোনো অংশ দিয়ে খুঁজুন" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="status">অনুমোদন স্ট্যাটাস</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">সব</option>
+                        <option value="pending" selected="@(status == "pending")">অপেক্ষমান</option>
+                        <option value="approved" selected="@(status == "approved")">অনুমোদিত</option>
+                        <option value="rejected" selected="@(status == "rejected")">প্রত্যাখ্যাত</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="approver">অনুমোদন দিয়েছেন</label>
+                    <select name="approver" id="approver" class="form-select">
+                        <option value="">সব</option>
+                        @foreach (var a in approvers)
+                        {
+                            <option value="@a" selected="@(approverFilter == a)">@approverNames.GetValueOrDefault(a, a)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-green">ফিল্টার করুন</button>
+                    <a asp-controller="Admin" asp-action="Registrations" class="btn btn-outline-secondary">রিসেট</a>
+                </div>
+            </form>
+        </div>
+
         <div class="form-panel">
             @if (registrations.Count == 0)
             {
-                <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো রেজিস্ট্রেশন হয়নি।</p>
+                <p class="mb-0" style="color: var(--brand-muted);">@(hasFilter ? "ফিল্টারের সাথে মেলে এমন কোনো রেজিস্ট্রেশন পাওয়া যায়নি।" : "এখনো কোনো রেজিস্ট্রেশন হয়নি।")</p>
             }
             else
             {
@@ -43,6 +103,8 @@
                                 <th scope="col">টু অ্যাকাউন্ট</th>
                                 <th scope="col">প্রদেয়</th>
                                 <th scope="col">অনুমোদন</th>
+                                <th scope="col">ট্রানজেকশন আইডি</th>
+                                <th scope="col">অনুমোদনকারী ও সময়</th>
                                 <th scope="col"></th>
                             </tr>
                         </thead>
@@ -66,12 +128,18 @@
                                             Registration.ApprovalRejected => "text-bg-danger",
                                             _ => "text-bg-secondary",
                                         })">@(reg.ApprovalStatus ?? "অপেক্ষমান")</span>
+                                    </td>
+                                    <td class="text-nowrap">@reg.TransactionId</td>
+                                    <td class="text-nowrap">
                                         @if (reg.ApprovalAt is DateTime decidedAt)
                                         {
                                             var approver = approverNames.GetValueOrDefault(reg.ApprovalBy ?? "", reg.ApprovalBy ?? "—");
-                                            <div class="small text-muted mt-1 text-nowrap">
-                                                @approver · @decidedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
-                                            </div>
+                                            <span>@approver</span>
+                                            <div class="small text-muted">@decidedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                        }
+                                        else
+                                        {
+                                            <span style="color: var(--brand-muted);">—</span>
                                         }
                                     </td>
                                     <td class="text-end text-nowrap">

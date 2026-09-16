@@ -24,16 +24,55 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return View();
     }
 
-    // GET /Admin/Registrations — every registration with approve/reject controls.
-    public async Task<IActionResult> Registrations()
+    // GET /Admin/Registrations?phone=&medium=&from=&to=&status=&approver= — every registration
+    // with optional filters (partial phone/account search, medium/status/approver dropdowns)
+    // plus approve/reject controls.
+    public async Task<IActionResult> Registrations(string? phone, string? medium, string? from, string? to, string? status, string? approver)
     {
-        ViewBag.Registrations = await db.Registrations.AsNoTracking()
-            .OrderByDescending(r => r.Id).ToListAsync();
+        var registrations = db.Registrations.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(phone))
+        {
+            var term = phone.Trim();
+            registrations = registrations.Where(r => r.Phone.Contains(term));
+        }
+        if (!string.IsNullOrWhiteSpace(medium))
+            registrations = registrations.Where(r => r.PaymentMedium == medium);
+        if (!string.IsNullOrWhiteSpace(from))
+        {
+            var term = from.Trim();
+            registrations = registrations.Where(r => r.FromAccount.Contains(term));
+        }
+        if (!string.IsNullOrWhiteSpace(to))
+        {
+            var term = to.Trim();
+            registrations = registrations.Where(r => r.ToAccount.Contains(term));
+        }
+        if (status == "pending") registrations = registrations.Where(r => r.ApprovalStatus == null);
+        else if (status == "approved") registrations = registrations.Where(r => r.ApprovalStatus == Registration.ApprovalApproved);
+        else if (status == "rejected") registrations = registrations.Where(r => r.ApprovalStatus == Registration.ApprovalRejected);
+        if (!string.IsNullOrWhiteSpace(approver))
+            registrations = registrations.Where(r => r.ApprovalBy == approver);
+
+        ViewBag.Registrations = await registrations.OrderByDescending(r => r.Id).ToListAsync();
         // Approver display names, keyed by phone — regular-admin logins store the phone in ApprovalBy,
         // while the static admin stores its display name already (no row here, falls back to it).
         ViewBag.ApproverNames = await db.AppUsers.AsNoTracking()
             .Where(u => u.FullName != "")
             .ToDictionaryAsync(u => u.Phone, u => u.FullName);
+        // Filter dropdown choices: mediums and deciders actually present in the registrations.
+        ViewBag.Mediums = await db.Registrations.AsNoTracking()
+            .Select(r => r.PaymentMedium).Distinct().OrderBy(m => m).ToListAsync();
+        ViewBag.Approvers = await db.Registrations.AsNoTracking()
+            .Where(r => r.ApprovalBy != null && r.ApprovalBy != "")
+            .Select(r => r.ApprovalBy!).Distinct().ToListAsync();
+
+        ViewBag.Phone = phone ?? "";
+        ViewBag.Medium = medium ?? "";
+        ViewBag.From = from ?? "";
+        ViewBag.To = to ?? "";
+        ViewBag.Status = status ?? "";
+        ViewBag.Approver = approver ?? "";
         return View();
     }
 
