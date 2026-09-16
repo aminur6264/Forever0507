@@ -17,16 +17,9 @@
         padding: 0;
     }
 
-    .reg-card {
+    .pass {
         max-width: none;
         box-shadow: none;
-        border: 1px solid #333;
-        border-radius: 0;
         page-break-inside: avoid;
-    }
-
-    .reg-card__head {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
     }
 }

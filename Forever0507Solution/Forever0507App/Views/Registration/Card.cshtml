@@ -5,54 +5,72 @@
 
 <section class="section">
     <div class="container">
-        <article class="reg-card">
-            <header class="reg-card__head">
-                <svg width="56" height="56" viewBox="0 0 120 120" class="mb-2" role="img" aria-label="ব্যাচ-২০০৫ প্রতীক">
-                    <circle cx="60" cy="60" r="56" fill="rgba(250,247,240,.12)" stroke="#d4a017" stroke-width="3" />
-                    <text x="60" y="70" text-anchor="middle" font-size="32" fill="#faf7f0" font-family="'Noto Serif Bengali', serif" font-weight="700">০৫</text>
-                </svg>
-                <h1 class="h4 fw-bold mb-0">@Event.EventName</h1>
-                <p class="mb-0 small">@Event.Tagline · @Event.CohortLine</p>
+        <article class="pass">
+            <header class="pass__head">
+                @if (!string.IsNullOrEmpty(Event.LogoUrl))
+                {
+                    <img src="@Event.LogoUrl" alt="@Event.CommunityName" class="pass__logo" />
+                }
+                else
+                {
+                    <div class="pass__emblem">০৫</div>
+                }
+                <h1 class="pass__title">@Event.EventName</h1>
+                <p class="pass__tag">@Event.Tagline · @Event.CohortLine</p>
+                <span class="pass__ribbon">🎟️ অনুমোদিত প্রবেশ কার্ড</span>
             </header>
 
-            <div class="reg-card__body">
-                <div class="text-center mb-4">
-                    <div class="small" style="color: var(--brand-muted);">রেজিস্ট্রেশন নম্বর</div>
-                    <div class="reg-card__regno">@Model.RegistrationNo</div>
+            <div class="pass__nameband">
+                <div>
+                    <div class="pass__label">অংশগ্রহণকারী</div>
+                    <div class="pass__name">@Model.FullName</div>
                 </div>
-
-                <dl class="row mb-0">
-                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">নাম</dt>
-                    <dd class="col-7 col-sm-8 fw-semibold">@Model.FullName</dd>
-
-                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">জেলা</dt>
-                    <dd class="col-7 col-sm-8 fw-semibold">@Model.District</dd>
-
-                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">স্কুল</dt>
-                    <dd class="col-7 col-sm-8 fw-semibold">@Model.SchoolName</dd>
-
-                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">এসএসসি সাল</dt>
-                    <dd class="col-7 col-sm-8 fw-semibold">@BengaliText.ToBengaliDigits(Model.SscYear)</dd>
-
-                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">মোবাইল</dt>
-                    <dd class="col-7 col-sm-8 fw-semibold">@Model.Phone</dd>
-
-                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">জার্সি সাইজ</dt>
-                    <dd class="col-7 col-sm-8 fw-semibold">@ViewBag.JerseyLabel</dd>
-
-
-                    <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">তারিখ ও স্থান</dt>
-                    <dd class="col-7 col-sm-8 fw-semibold">
-                        @Event.StartTimeBn, @Event.StartTimeOnlyBn<br />
-                        @Event.Venue, @Event.Address
-                    </dd>
-                </dl>
-
-                <p class="small mt-3 mb-0 pt-3" style="border-top: 1px dashed rgba(11,61,46,.25); color: var(--brand-muted);">
-                    @Event.PayNote কার্ডটি প্রিন্ট করে বা মোবাইলে রেখে অনুষ্ঠানের দিন গেটে দেখান।
-                    যেকোনো প্রয়োজনে: @Event.ContactPhone
-                </p>
+                <div class="pass__jersey">
+                    <span class="pass__jersey-size">@ViewBag.JerseyLabel</span>
+                    <span class="pass__jersey-cap">জার্সি সাইজ</span>
+                </div>
             </div>
+
+            <div class="pass__regno-band">
+                <div class="pass__label">রেজিস্ট্রেশন নম্বর</div>
+                <div class="pass__regno">@Model.RegistrationNo</div>
+            </div>
+
+            <div class="pass__grid">
+                <div class="pass__chip">
+                    <p class="pass__chip-label">📍 জেলা</p>
+                    <p class="pass__chip-value">@Model.District</p>
+                </div>
+                <div class="pass__chip">
+                    <p class="pass__chip-label">🎓 এসএসসি সাল</p>
+                    <p class="pass__chip-value">@BengaliText.ToBengaliDigits(Model.SscYear)</p>
+                </div>
+                <div class="pass__chip pass__chip--wide">
+                    <p class="pass__chip-label">🏫 স্কুল</p>
+                    <p class="pass__chip-value">@Model.SchoolName</p>
+                </div>
+                @* All registration figures render in plain ASCII digits. *@
+                <div class="pass__chip">
+                    <p class="pass__chip-label">📞 মোবাইল</p>
+                    <p class="pass__chip-value">@Model.Phone</p>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Email))
+                {
+                    <div class="pass__chip">
+                        <p class="pass__chip-label">✉️ ইমেইল</p>
+                        <p class="pass__chip-value">@Model.Email</p>
+                    </div>
+                }
+            </div>
+
+            <div class="pass__when">
+                <div class="pass__when-line"><span>📅</span><span><strong>@Event.StartTimeBn</strong>, @Event.StartTimeOnlyBn</span></div>
+                <div class="pass__when-line"><span>📍</span><span>@Event.Venue, @Event.Address</span></div>
+            </div>
+
+            <footer class="pass__foot">
+                কার্ডটি প্রিন্ট করে বা মোবাইলে রেখে অনুষ্ঠানের দিন গেটে দেখান · যোগাযোগ: @Event.ContactPhone
+            </footer>
         </article>
 
         <div class="d-flex gap-3 justify-content-center mt-4 no-print">
