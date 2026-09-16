@@ -8,10 +8,13 @@ using Microsoft.EntityFrameworkCore;
 namespace Forever0507App.Controllers;
 
 [Authorize(Roles = AuthConstants.AdminRole)]
-public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder, IWebHostEnvironment env, Services.EmailSender emailSender) : Controller
+public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder, IWebHostEnvironment env, Services.EmailSender emailSender, ILogger<AdminController> logger) : Controller
 {
     public const string PaymentVerified = "নিশ্চিত";
     public const string PaymentPending = "যাচাই অপেক্ষমান";
+
+    /// <summary>wwwroot path that survives production hosting setups where WebRootPath is null.</summary>
+    private string WebRootSafe => env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
 
     // GET /Admin
     public async Task<IActionResult> Index()
@@ -257,12 +260,21 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
                 return backTo;
             }
 
-            var folder = Path.Combine(env.WebRootPath, "uploads", "khoroch");
-            Directory.CreateDirectory(folder);
-            var fileName = $"{Guid.NewGuid():N}{ext}";
-            await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
-            await image.CopyToAsync(stream);
-            imageUrl = $"/uploads/khoroch/{fileName}";
+            try
+            {
+                var folder = Path.Combine(WebRootSafe, "uploads", "khoroch");
+                Directory.CreateDirectory(folder);
+                var fileName = $"{Guid.NewGuid():N}{ext}";
+                await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
+                await image.CopyToAsync(stream);
+                imageUrl = $"/uploads/khoroch/{fileName}";
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                logger.LogError(ex, "Khoroch receipt upload failed");
+                TempData["FlashError"] = "ছবি সংরক্ষণ করা যায়নি — সার্ভারে wwwroot/uploads ফোল্ডারে লেখার অনুমতি দিন।";
+                return backTo;
+            }
         }
 
         var me = User.Identity!.Name;
@@ -372,7 +384,7 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         if (string.IsNullOrEmpty(imageUrl)) return;
         try
         {
-            var full = Path.Combine(env.WebRootPath, imageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            var full = Path.Combine(WebRootSafe, imageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
             if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
         }
         catch (IOException)
@@ -595,12 +607,21 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
                 return RedirectToAction(nameof(Event));
             }
 
-            var folder = Path.Combine(env.WebRootPath, "uploads", "logo");
-            Directory.CreateDirectory(folder);
-            var fileName = $"{Guid.NewGuid():N}{ext}";
-            await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
-            await logo.CopyToAsync(stream);
-            logoUrl = $"/uploads/logo/{fileName}";
+            try
+            {
+                var folder = Path.Combine(WebRootSafe, "uploads", "logo");
+                Directory.CreateDirectory(folder);
+                var fileName = $"{Guid.NewGuid():N}{ext}";
+                await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
+                await logo.CopyToAsync(stream);
+                logoUrl = $"/uploads/logo/{fileName}";
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                logger.LogError(ex, "Event logo upload failed");
+                TempData["FlashError"] = "লোগো সংরক্ষণ করা যায়নি — সার্ভারে wwwroot/uploads ফোল্ডারে লেখার অনুমতি দিন।";
+                return RedirectToAction(nameof(Event));
+            }
         }
 
         var settings = await db.EventSettings.FirstOrDefaultAsync(s => s.Id == EventSettings.SingleRowId);
@@ -628,7 +649,7 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         if (string.IsNullOrEmpty(logoUrl)) return;
         try
         {
-            var full = Path.Combine(env.WebRootPath, logoUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            var full = Path.Combine(WebRootSafe, logoUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
             if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
         }
         catch (IOException)
@@ -707,12 +728,21 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
                 return RedirectToAction(nameof(WelcomeNotes));
             }
 
-            var folder = Path.Combine(env.WebRootPath, "uploads", "welcome");
-            Directory.CreateDirectory(folder);
-            var fileName = $"{Guid.NewGuid():N}{ext}";
-            await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
-            await photo.CopyToAsync(stream);
-            photoUrl = $"/uploads/welcome/{fileName}";
+            try
+            {
+                var folder = Path.Combine(WebRootSafe, "uploads", "welcome");
+                Directory.CreateDirectory(folder);
+                var fileName = $"{Guid.NewGuid():N}{ext}";
+                await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
+                await photo.CopyToAsync(stream);
+                photoUrl = $"/uploads/welcome/{fileName}";
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                logger.LogError(ex, "Welcome photo upload failed");
+                TempData["FlashError"] = "ছবি সংরক্ষণ করা যায়নি — সার্ভারে wwwroot/uploads ফোল্ডারে লেখার অনুমতি দিন।";
+                return RedirectToAction(nameof(WelcomeNotes));
+            }
         }
 
         WelcomeNote note;
@@ -746,7 +776,7 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         if (string.IsNullOrEmpty(photoUrl)) return;
         try
         {
-            var full = Path.Combine(env.WebRootPath, photoUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            var full = Path.Combine(WebRootSafe, photoUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
             if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
         }
         catch (IOException)
