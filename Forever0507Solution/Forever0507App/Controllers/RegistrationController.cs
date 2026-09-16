@@ -45,7 +45,7 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
             SscYear = eventOptions.SscYear,
             PaymentMedium = model.PaymentMedium!,
             Amount = model.ResolvedAmount!.Value,
-            PayableAmount = FeeCalculator.CalculatePayable(model.ResolvedAmount.Value),
+            PayableAmount = model.ResolvedAmount.Value, // no service charge — payable is the entered amount
             TransactionId = model.TransactionId!.Trim().ToUpperInvariant(),
             FromAccount = model.FromAccount!.Trim(),
             ToAccount = model.ToAccount!.Trim(),

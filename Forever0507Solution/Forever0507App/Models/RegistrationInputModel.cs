@@ -41,7 +41,7 @@ public class RegistrationInputModel : IValidatableObject
 
     [Required(ErrorMessage = "টাকার পরিমাণ লিখুন।")]
     [RegularExpression(@"^\d+(\.\d{1,2})?$", ErrorMessage = "শুধুমাত্র সংখ্যা লিখুন (যেমন: 1500)।")]
-    [Display(Name = "৮. টাকার পরিমাণ (মূল)")]
+    [Display(Name = "৮. টাকার পরিমাণ")]
     public string? AmountText { get; set; }
 
     [Required(ErrorMessage = "ট্রানজেকশন আইডি লিখুন।")]

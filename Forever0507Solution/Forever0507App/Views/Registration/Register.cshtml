@@ -17,7 +17,7 @@
                 <div class="form-panel">
                     <div class="alert alert-warning border-0 rounded-4 mb-4" role="alert">
                         💳 <strong>পেমেন্ট আগে, ফর্ম পরে:</strong> নিচের যেকোনো নম্বরে অন্তত
-                        @BengaliText.Taka(FeeCalculator.MinAmount) পাঠান (প্রদেয় = মূল + ২%),
+                        @BengaliText.Taka(FeeCalculator.MinAmount) পাঠান,
                         তারপর ফর্মে ট্রানজেকশনের তথ্য দিন।
                         <ul class="mb-0 mt-2 ps-3">
                             @{
@@ -125,11 +125,6 @@
                                 <div class="form-text">সর্বনিম্ন @BengaliText.Taka(FeeCalculator.MinAmount), শুধু সংখ্যা।</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label" for="payablePreview">প্রদেয় পরিমাণ (মূল + ২%)</label>
-                                <div class="form-control bg-body-tertiary fw-semibold" id="payablePreview" aria-live="polite">—</div>
-                                <div class="form-text">এই পরিমাণটাই মোবাইল ব্যাংকিংয়ে পাঠাতে হবে।</div>
-                            </div>
-                            <div class="col-md-6">
                                 <label asp-for="TransactionId" class="form-label"></label>
                                 <input asp-for="TransactionId" class="form-control" placeholder="যেমন: 9HT7K2XPLM" />
                                 <span asp-validation-for="TransactionId" class="text-danger small"></span>
@@ -160,7 +155,6 @@
                         </div>
 
                         <div class="fee-estimate mt-4">
-                            প্রদেয় পরিমাণ (মূল + ২%): <strong id="feeEstimate">—</strong>
                             <div class="small" style="color: rgba(255,255,255,.7);">@Event.PayNote</div>
                         </div>
 
