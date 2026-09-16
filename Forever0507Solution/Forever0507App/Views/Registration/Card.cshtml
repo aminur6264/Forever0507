@@ -4,12 +4,14 @@
 }
 
 @* Print outputs ONLY the .pass article: body>header/body>footer targets the layout chrome
-   precisely, so the pass's own __head/__foot bands are never caught by a generic hide. *@
+   precisely, so the pass's own __head/__foot bands are never caught by a generic hide.
+   @page margin:0 keeps the browser from drawing its own date/title/URL headers-footers —
+   they live in the margin area; the card gets its own spacing instead. *@
 <style>
     @@media print {
         @@page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 0;
         }
 
         body {
@@ -39,7 +41,7 @@
 
         .pass {
             max-width: none !important;
-            margin: 0 !important;
+            margin: 10mm !important;
             box-shadow: none !important;
             page-break-inside: avoid;
         }
