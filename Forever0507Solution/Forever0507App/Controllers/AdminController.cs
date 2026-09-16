@@ -8,13 +8,11 @@ using Microsoft.EntityFrameworkCore;
 namespace Forever0507App.Controllers;
 
 [Authorize(Roles = AuthConstants.AdminRole)]
-public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder, IWebHostEnvironment env, Services.EmailSender emailSender, ILogger<AdminController> logger) : Controller
+public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder, Services.EmailSender emailSender, ILogger<AdminController> logger) : Controller
 {
     public const string PaymentVerified = "নিশ্চিত";
     public const string PaymentPending = "যাচাই অপেক্ষমান";
 
-    /// <summary>wwwroot path that survives production hosting setups where WebRootPath is null.</summary>
-    private string WebRootSafe => env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
 
     // GET /Admin
     public async Task<IActionResult> Index()
@@ -249,7 +247,8 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             return backTo;
         }
 
-        string? imageUrl = null;
+        byte[]? imageData = null;
+        string? imageContentType = null;
         if (image is { Length: > 0 })
         {
             var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
@@ -260,21 +259,17 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
                 return backTo;
             }
 
-            try
+            // Stored in the database (served via /Image/Khoroch/{id}) — no filesystem writes,
+            // so uploads keep working on shared hosting with locked-down permissions.
+            using var ms = new MemoryStream();
+            await image.CopyToAsync(ms);
+            imageData = ms.ToArray();
+            imageContentType = ext switch
             {
-                var folder = Path.Combine(WebRootSafe, "uploads", "khoroch");
-                Directory.CreateDirectory(folder);
-                var fileName = $"{Guid.NewGuid():N}{ext}";
-                await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
-                await image.CopyToAsync(stream);
-                imageUrl = $"/uploads/khoroch/{fileName}";
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                logger.LogError(ex, "Khoroch receipt upload failed");
-                TempData["FlashError"] = "ছবি সংরক্ষণ করা যায়নি — সার্ভারে wwwroot/uploads ফোল্ডারে লেখার অনুমতি দিন।";
-                return backTo;
-            }
+                ".png" => "image/png",
+                ".webp" => "image/webp",
+                _ => "image/jpeg",
+            };
         }
 
         var me = User.Identity!.Name;
@@ -307,10 +302,10 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         khoroch.Description = (model.Description ?? "").Trim();
         khoroch.Items.AddRange(items);
         khoroch.Amount = items.Sum(i => i.LineTotal);
-        if (imageUrl is not null)
+        if (imageData is not null)
         {
-            DeleteKhorochImage(khoroch.ImageUrl); // replace the old file only after a new one is in hand
-            khoroch.ImageUrl = imageUrl;
+            khoroch.ImageData = imageData;
+            khoroch.ImageContentType = imageContentType;
         }
         if (isNew)
         {
@@ -327,8 +322,11 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             var initials = new string(source.Where(char.IsLetterOrDigit).Take(3).ToArray()).ToUpperInvariant();
             if (initials.Length == 0) initials = "USR";
             khoroch.InvoiceCode = $"KH-{khoroch.Date:yyyyMMdd}-{initials}-{khoroch.Id:D4}";
-            await db.SaveChangesAsync();
         }
+        if (imageData is not null)
+            khoroch.ImageUrl = $"/Image/Khoroch/{khoroch.Id}"; // route to the DB-stored bytes (admins only)
+        if (isNew || imageData is not null)
+            await db.SaveChangesAsync();
 
         TempData["Flash"] = isNew
             ? $"{khoroch.InvoiceCode} খরচ যোগ হয়েছে — ৳{khoroch.Amount:N0}।"
@@ -377,20 +375,6 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         if (khoroch is null) return NotFound();
         ViewBag.AdminNames = await AdminNamesAsync();
         return View(khoroch);
-    }
-
-    private void DeleteKhorochImage(string? imageUrl)
-    {
-        if (string.IsNullOrEmpty(imageUrl)) return;
-        try
-        {
-            var full = Path.Combine(WebRootSafe, imageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-            if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
-        }
-        catch (IOException)
-        {
-            // best effort — a stale file in uploads is harmless
-        }
     }
 
     // POST /Admin/RejectRegistration/5 — one-way: only an undecided (null) registration can be rejected.
@@ -596,7 +580,8 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             return RedirectToAction(nameof(Event));
         }
 
-        string? logoUrl = null;
+        byte[]? logoData = null;
+        string? logoContentType = null;
         if (logo is { Length: > 0 })
         {
             var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
@@ -607,21 +592,16 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
                 return RedirectToAction(nameof(Event));
             }
 
-            try
+            // Stored in the database (served via /Image/Logo) — no filesystem writes needed.
+            using var ms = new MemoryStream();
+            await logo.CopyToAsync(ms);
+            logoData = ms.ToArray();
+            logoContentType = ext switch
             {
-                var folder = Path.Combine(WebRootSafe, "uploads", "logo");
-                Directory.CreateDirectory(folder);
-                var fileName = $"{Guid.NewGuid():N}{ext}";
-                await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
-                await logo.CopyToAsync(stream);
-                logoUrl = $"/uploads/logo/{fileName}";
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                logger.LogError(ex, "Event logo upload failed");
-                TempData["FlashError"] = "লোগো সংরক্ষণ করা যায়নি — সার্ভারে wwwroot/uploads ফোল্ডারে লেখার অনুমতি দিন।";
-                return RedirectToAction(nameof(Event));
-            }
+                ".png" => "image/png",
+                ".webp" => "image/webp",
+                _ => "image/jpeg",
+            };
         }
 
         var settings = await db.EventSettings.FirstOrDefaultAsync(s => s.Id == EventSettings.SingleRowId);
@@ -632,30 +612,16 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             db.EventSettings.Add(settings);
         }
         settings!.UpdateFrom(model);
-        if (logoUrl is not null)
+        if (logoData is not null)
         {
-            DeleteEventLogo(settings.LogoUrl); // replace the old file only after a new one is in hand
-            settings.LogoUrl = logoUrl;
+            settings.LogoData = logoData;
+            settings.LogoContentType = logoContentType;
         }
         await db.SaveChangesAsync();
 
         eventHolder.Current = settings.ToOptions();
         TempData["Flash"] = isNew ? "ইভেন্ট তথ্য তৈরি হয়েছে।" : "ইভেন্ট তথ্য আপডেট হয়েছে।";
         return RedirectToAction(nameof(Event));
-    }
-
-    private void DeleteEventLogo(string? logoUrl)
-    {
-        if (string.IsNullOrEmpty(logoUrl)) return;
-        try
-        {
-            var full = Path.Combine(WebRootSafe, logoUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-            if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
-        }
-        catch (IOException)
-        {
-            // best effort — a stale file in uploads is harmless
-        }
     }
 
     // Emails the new account's credentials after approval. Returns the Bengali flash note
@@ -717,7 +683,8 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             return RedirectToAction(nameof(WelcomeNotes));
         }
 
-        string? photoUrl = null;
+        byte[]? photoData = null;
+        string? photoContentType = null;
         if (photo is { Length: > 0 })
         {
             var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
@@ -728,21 +695,16 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
                 return RedirectToAction(nameof(WelcomeNotes));
             }
 
-            try
+            // Stored in the database (served via /Image/Welcome/{id}) — no filesystem writes.
+            using var ms = new MemoryStream();
+            await photo.CopyToAsync(ms);
+            photoData = ms.ToArray();
+            photoContentType = ext switch
             {
-                var folder = Path.Combine(WebRootSafe, "uploads", "welcome");
-                Directory.CreateDirectory(folder);
-                var fileName = $"{Guid.NewGuid():N}{ext}";
-                await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
-                await photo.CopyToAsync(stream);
-                photoUrl = $"/uploads/welcome/{fileName}";
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                logger.LogError(ex, "Welcome photo upload failed");
-                TempData["FlashError"] = "ছবি সংরক্ষণ করা যায়নি — সার্ভারে wwwroot/uploads ফোল্ডারে লেখার অনুমতি দিন।";
-                return RedirectToAction(nameof(WelcomeNotes));
-            }
+                ".png" => "image/png",
+                ".webp" => "image/webp",
+                _ => "image/jpeg",
+            };
         }
 
         WelcomeNote note;
@@ -760,29 +722,22 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         note.Message = model.Message!.Trim();
         note.Name = model.Name!.Trim();
         note.Designation = model.Designation!.Trim();
-        if (photoUrl is not null)
+        if (photoData is not null)
         {
-            DeleteWelcomePhoto(note.PhotoUrl); // replace the old file only after a new one is in hand
-            note.PhotoUrl = photoUrl;
+            note.PhotoData = photoData;
+            note.PhotoContentType = photoContentType;
         }
         await db.SaveChangesAsync();
 
+        // PhotoUrl points at the DB route — stamp it once the Id is known.
+        if (photoData is not null)
+        {
+            note.PhotoUrl = $"/Image/Welcome/{note.Id}";
+            await db.SaveChangesAsync();
+        }
+
         TempData["Flash"] = model.Id == 0 ? "ওয়েলকাম নোট যোগ হয়েছে।" : "ওয়েলকাম নোট আপডেট হয়েছে।";
         return RedirectToAction(nameof(WelcomeNotes));
-    }
-
-    private void DeleteWelcomePhoto(string? photoUrl)
-    {
-        if (string.IsNullOrEmpty(photoUrl)) return;
-        try
-        {
-            var full = Path.Combine(WebRootSafe, photoUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-            if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
-        }
-        catch (IOException)
-        {
-            // best effort — a stale file in uploads is harmless
-        }
     }
 
     // POST /Admin/ToggleWelcomeNoteStatus/5 — flip a note between active (home page) and inactive.

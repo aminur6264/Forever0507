@@ -117,6 +117,26 @@ using (var scope = app.Services.CreateScope())
             $"ALTER TABLE Khorochs ADD ImageUrl nvarchar(200) NULL");
     }
 
+    // DB-backed image storage (uploads happen on locked-down shared hosting too) —
+    // each table gets the byte payload + content type; served via /Image/... routes.
+    var upgrades = new (string Table, string Column, string Sql)[]
+    {
+        ("EventSettings", "LogoData", "ALTER TABLE EventSettings ADD LogoData varbinary(max) NULL"),
+        ("EventSettings", "LogoContentType", "ALTER TABLE EventSettings ADD LogoContentType nvarchar(50) NULL"),
+        ("WelcomeNotes", "PhotoData", "ALTER TABLE WelcomeNotes ADD PhotoData varbinary(max) NULL"),
+        ("WelcomeNotes", "PhotoContentType", "ALTER TABLE WelcomeNotes ADD PhotoContentType nvarchar(50) NULL"),
+        ("Khorochs", "ImageData", "ALTER TABLE Khorochs ADD ImageData varbinary(max) NULL"),
+        ("Khorochs", "ImageContentType", "ALTER TABLE Khorochs ADD ImageContentType nvarchar(50) NULL"),
+    };
+    foreach (var (table, column, sql) in upgrades)
+    {
+        var exists = await db.Database.SqlQuery<int>(
+            $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID({table}) AND name = {column}")
+            .SingleAsync();
+        if (exists == 0)
+            await db.Database.ExecuteSqlAsync($"EXEC({sql})");
+    }
+
     await DbSeeder.SeedAsync(db, configEvent);
 
     // From here on the app reads event text from the database, not appsettings.
@@ -147,7 +167,8 @@ app.Use(async (context, next) =>
     var isAllowedPath =
         path.StartsWithSegments("/Account") ||
         path.StartsWithSegments("/css") || path.StartsWithSegments("/js") || path.StartsWithSegments("/lib") ||
-        path.StartsWithSegments("/images") || path.StartsWithSegments("/uploads") || path.StartsWithSegments("/favicon") ||
+        path.StartsWithSegments("/images") || path.StartsWithSegments("/Image") ||
+        path.StartsWithSegments("/uploads") || path.StartsWithSegments("/favicon") ||
         path.StartsWithSegments("/Forever0507App.styles.css");
 
     if (context.User.Identity?.IsAuthenticated == true

@@ -16,9 +16,15 @@ public class WelcomeNote
     [MaxLength(120)]
     public string Designation { get; set; } = "";
 
-    /// <summary>Optional profile photo under /uploads/welcome. Null → the letter avatar is shown instead.</summary>
+    /// <summary>Optional profile photo. Null → the letter avatar is shown instead.</summary>
     [MaxLength(200)]
     public string? PhotoUrl { get; set; }
+
+    /// <summary>Photo bytes — DB storage (shared-hosting safe), served via /Image/Welcome/{id}.</summary>
+    public byte[]? PhotoData { get; set; }
+
+    [MaxLength(50)]
+    public string? PhotoContentType { get; set; }
 
     /// <summary>Inactive notes stay listed but are hidden from the home page; new notes start active.</summary>
     public bool IsActive { get; set; } = true;

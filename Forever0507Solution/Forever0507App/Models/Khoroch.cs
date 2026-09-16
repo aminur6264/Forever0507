@@ -46,9 +46,15 @@ public class Khoroch
 
     public DateTime? ActionAt { get; set; }
 
-    /// <summary>Optional receipt/photo under /uploads/khoroch, shown as a modal on click. Null → no image icon.</summary>
+    /// <summary>Optional receipt/photo URL, shown as a modal on click. Null → no image icon.</summary>
     [MaxLength(200)]
     public string? ImageUrl { get; set; }
+
+    /// <summary>Receipt bytes — DB storage (shared-hosting safe), served via /Image/Khoroch/{id} (admins only).</summary>
+    public byte[]? ImageData { get; set; }
+
+    [MaxLength(50)]
+    public string? ImageContentType { get; set; }
 
     public List<KhorochItem> Items { get; set; } = [];
 

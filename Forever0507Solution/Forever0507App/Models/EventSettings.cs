@@ -26,6 +26,12 @@ public class EventSettings
     [MaxLength(200)]
     public string? LogoUrl { get; set; }
 
+    /// <summary>Logo bytes — DB storage (shared-hosting safe), served via /Image/Logo. Takes precedence over LogoUrl.</summary>
+    public byte[]? LogoData { get; set; }
+
+    [MaxLength(50)]
+    public string? LogoContentType { get; set; }
+
     [MaxLength(120)]
     public string CohortLine { get; set; } = "";
 
@@ -63,6 +69,7 @@ public class EventSettings
         EventName = o.EventName,
         Tagline = o.Tagline,
         LogoUrl = o.LogoUrl,
+        LogoData = null, // the config seed cannot carry a logo image
         CohortLine = o.CohortLine,
         SscYear = o.SscYear,
         EstablishedNote = o.EstablishedNote,
@@ -81,7 +88,10 @@ public class EventSettings
         CommunityName = CommunityName,
         EventName = EventName,
         Tagline = Tagline,
-        LogoUrl = LogoUrl ?? "",
+
+        // DB-stored logo wins; a legacy file path (old uploads) still works.
+        LogoUrl = LogoData is { Length: > 0 } ? "/Image/Logo" : (LogoUrl ?? ""),
+
         CohortLine = CohortLine,
         SscYear = SscYear,
         EstablishedNote = EstablishedNote,
