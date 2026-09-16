@@ -145,6 +145,7 @@ public class EventSettingsInputModel
     public DateTime StartTime { get; set; }
 
     [Required(ErrorMessage = "টাইমজোন অফসেট দিন।")]
+    [RegularExpression(@"^[+-]\d{2}:\d{2}$", ErrorMessage = "সঠিক টাইমজোন অফসেট দিন (যেমন: +06:00)।")]
     [Display(Name = "টাইমজোন অফসেট")]
     public string TimeZoneOffset { get; set; } = "+06:00";
 

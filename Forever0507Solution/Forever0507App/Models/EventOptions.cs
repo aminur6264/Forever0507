@@ -42,8 +42,18 @@ public class EventOptions
 
     private static readonly CultureInfo BengaliCulture = new("bn-BD");
 
-    /// <summary>Deterministic ISO-8601 string handed to the JS countdown, e.g. "2026-11-06T10:00:00+06:00".</summary>
-    public string StartTimeIso => $"{StartTime:yyyy-MM-ddTHH:mm:ss}{TimeZoneOffset}";
+    /// <summary>Deterministic ISO-8601 string handed to the JS countdown, e.g. "2026-11-06T10:00:00+06:00".
+    /// The offset's sign is repaired on the way out — a stored "06:00" (leading + lost) still yields valid ISO.</summary>
+    public string StartTimeIso
+    {
+        get
+        {
+            var offset = (TimeZoneOffset ?? "").Trim();
+            if (offset.Length > 0 && offset[0] != '+' && offset[0] != '-')
+                offset = "+" + offset;
+            return $"{StartTime:yyyy-MM-ddTHH:mm:ss}{offset}";
+        }
+    }
 
     /// <summary>Human-readable Bengali start time, e.g. "০৬ নভেম্বর ২০২৬, শুক্রবার".</summary>
     public string StartTimeBn =>

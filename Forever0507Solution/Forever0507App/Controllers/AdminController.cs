@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Forever0507App.Controllers;
 
 [Authorize(Roles = AuthConstants.AdminRole)]
-public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder, IWebHostEnvironment env) : Controller
+public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder, IWebHostEnvironment env, Services.EmailSender emailSender) : Controller
 {
     public const string PaymentVerified = "নিশ্চিত";
     public const string PaymentPending = "যাচাই অপেক্ষমান";
@@ -101,10 +101,11 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
 
             // Registrant's login: username = phone, password = phone until they set their own.
             var phone = registration.Phone;
-            var userNote = await db.AppUsers.AnyAsync(u => u.Phone == phone)
-                ? "এই নম্বরে ব্যবহারকারী অ্যাকাউন্ট আগেই আছে, নতুন করে তৈরি হয়নি।"
-                : null;
-            if (userNote is null)
+            var createdAccount = !await db.AppUsers.AnyAsync(u => u.Phone == phone);
+            var userNote = createdAccount
+                ? null
+                : "এই নম্বরে ব্যবহারকারী অ্যাকাউন্ট আগেই আছে, নতুন করে তৈরি হয়নি।";
+            if (createdAccount)
             {
                 db.AppUsers.Add(new AppUser
                 {
@@ -118,6 +119,14 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
 
             await db.SaveChangesAsync();
             TempData["Flash"] = $"{registration.RegistrationNo} অনুমোদিত — {creditNote} {userNote}";
+
+            // Credentials only go out with a genuinely new account — an existing user's
+            // password is theirs, never resent. Whatever happens, the flash says so.
+            if (createdAccount)
+            {
+                var emailNote = await SendLoginEmailAsync(registration, eventHolder.Current.CommunityName);
+                TempData["Flash"] += $" {emailNote}";
+            }
         }
         return RedirectToAction(nameof(Registrations));
     }
@@ -376,6 +385,40 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         {
             // best effort — a stale file in uploads is harmless
         }
+    }
+
+    // Emails the new account's credentials after approval. Returns the Bengali flash note
+    // describing the outcome — sent, skipped (no address / no SMTP), or failed.
+    private async Task<string> SendLoginEmailAsync(Registration registration, string communityName)
+    {
+        if (string.IsNullOrWhiteSpace(registration.Email))
+            return "রেজিস্ট্রেন্টের ইমেইল নেই, তাই লগইন তথ্য ইমেইল করা যায়নি।";
+        if (!emailSender.IsConfigured)
+            return "SMTP কনফিগার করা নেই, তাই লগইন তথ্য ইমেইল করা হয়নি।";
+
+        var name = System.Net.WebUtility.HtmlEncode(registration.FullName.Trim());
+        var loginUrl = $"{Request.Scheme}://{Request.Host}/Account/Login";
+        var body = $"""
+            <p>সম্মানিত {name},</p>
+            <p>অভিনন্দন! আপনার রেজিস্ট্রেশন (<b>{registration.RegistrationNo}</b>) অনুমোদিত হয়েছে। এখন আপনি সাইটে লগইন করে আপনার কার্ড দেখতে পারবেন।</p>
+            <p>আপনার লগইন তথ্য:</p>
+            <ul>
+                <li>ইউজারনেম: <b>{registration.Phone}</b></li>
+                <li>প্রাথমিক পাসওয়ার্ড: <b>{registration.Phone}</b></li>
+            </ul>
+            <p>প্রথম লগইনের সময় নিজের পছন্দের পাসওয়ার্ড সেট করে নিতে হবে।</p>
+            <p><a href="{loginUrl}">এখানে লগইন করুন</a></p>
+            <p>— {System.Net.WebUtility.HtmlEncode(communityName)}</p>
+            """;
+
+        var to = registration.Email.Trim();
+        var sent = await emailSender.SendAsync(
+            to,
+            $"{communityName} — রেজিস্ট্রেশন অনুমোদিত, লগইন তথ্য",
+            body);
+        return sent
+            ? $"লগইন তথ্য {to} ইমেইলে পাঠানো হয়েছে।"
+            : "লগইন তথ্য ইমেইল করা ব্যর্থ হয়েছে — অনুগ্রহ করে নিজে জানিয়ে দিন।";
     }
 
     // GET /Admin/Setup — hub page listing the setup sections.

@@ -1,5 +1,6 @@
 using Forever0507App.Data;
 using Forever0507App.Models;
+using Forever0507App.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +25,10 @@ var eventHolder = new EventOptionsHolder(configEvent);
 builder.Services.AddSingleton(eventHolder);
 // Resolved per request so an admin save (which swaps holder.Current) takes effect immediately.
 builder.Services.AddScoped(sp => eventHolder.Current);
+
+// SMTP for the approval credential email — empty Server in config keeps sending disabled.
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection(EmailOptions.SectionName));
+builder.Services.AddSingleton<EmailSender>();
 
 builder.Services.AddDbContext<AlumniDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
