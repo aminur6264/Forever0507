@@ -197,9 +197,11 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
 
     // POST /Admin/KhorochSave — create or update. The amount is always recomputed from the
     // item rows on the server; the invoice code is stamped once from the identity Id.
+    // An optional receipt photo (jpg/png/webp, ≤ 2 MB) is stored under wwwroot/uploads/khoroch
+    // and replaces any previous one.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> KhorochSave(KhorochInputModel model)
+    public async Task<IActionResult> KhorochSave(KhorochInputModel model, IFormFile? image)
     {
         var backTo = model.Id == 0
             ? RedirectToAction(nameof(KhorochForm))
@@ -234,6 +236,25 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             return backTo;
         }
 
+        string? imageUrl = null;
+        if (image is { Length: > 0 })
+        {
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var ext = Path.GetExtension(image.FileName).ToLowerInvariant();
+            if (!allowed.Contains(ext) || image.Length > 2 * 1024 * 1024)
+            {
+                TempData["FlashError"] = "ছবি হতে হবে jpg/png/webp এবং সর্বোচ্চ ২ এমবি।";
+                return backTo;
+            }
+
+            var folder = Path.Combine(env.WebRootPath, "uploads", "khoroch");
+            Directory.CreateDirectory(folder);
+            var fileName = $"{Guid.NewGuid():N}{ext}";
+            await using var stream = System.IO.File.Create(Path.Combine(folder, fileName));
+            await image.CopyToAsync(stream);
+            imageUrl = $"/uploads/khoroch/{fileName}";
+        }
+
         var me = User.Identity!.Name;
         var meName = await db.AppUsers.AsNoTracking()
             .Where(u => u.Phone == me)
@@ -264,6 +285,11 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         khoroch.Description = (model.Description ?? "").Trim();
         khoroch.Items.AddRange(items);
         khoroch.Amount = items.Sum(i => i.LineTotal);
+        if (imageUrl is not null)
+        {
+            DeleteKhorochImage(khoroch.ImageUrl); // replace the old file only after a new one is in hand
+            khoroch.ImageUrl = imageUrl;
+        }
         if (isNew)
         {
             khoroch.CreatedBy = me!;
@@ -329,6 +355,20 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         if (khoroch is null) return NotFound();
         ViewBag.AdminNames = await AdminNamesAsync();
         return View(khoroch);
+    }
+
+    private void DeleteKhorochImage(string? imageUrl)
+    {
+        if (string.IsNullOrEmpty(imageUrl)) return;
+        try
+        {
+            var full = Path.Combine(env.WebRootPath, imageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
+        }
+        catch (IOException)
+        {
+            // best effort — a stale file in uploads is harmless
+        }
     }
 
     // POST /Admin/RejectRegistration/5 — one-way: only an undecided (null) registration can be rejected.

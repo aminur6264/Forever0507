@@ -107,6 +107,16 @@ using (var scope = app.Services.CreateScope())
         END
         """);
 
+    // Receipt-image column on Khorochs (for rows created before the feature).
+    var hasKhorochImage = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'Khorochs') AND name = N'ImageUrl'")
+        .SingleAsync();
+    if (hasKhorochImage == 0)
+    {
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE Khorochs ADD ImageUrl nvarchar(200) NULL");
+    }
+
     await DbSeeder.SeedAsync(db, configEvent);
 
     // From here on the app reads event text from the database, not appsettings.

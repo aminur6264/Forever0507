@@ -46,6 +46,10 @@ public class Khoroch
 
     public DateTime? ActionAt { get; set; }
 
+    /// <summary>Optional receipt/photo under /uploads/khoroch, shown as a modal on click. Null → no image icon.</summary>
+    [MaxLength(200)]
+    public string? ImageUrl { get; set; }
+
     public List<KhorochItem> Items { get; set; } = [];
 
     public const string Approved = "অনুমোদিত";

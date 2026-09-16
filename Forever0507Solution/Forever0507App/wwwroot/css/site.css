@@ -834,6 +834,22 @@ a {
   background: var(--brand-green);
 }
 
+/* Khoroch receipt thumbnails (list icon opens a full modal) */
+.khoroch-img-thumb {
+  width: 110px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: .6rem;
+  border: 1px solid rgba(11, 61, 46, .18);
+  box-shadow: 0 4px 12px rgba(11, 61, 46, .12);
+  background: #fff;
+}
+
+.khoroch-img-thumb--lg {
+  width: 260px;
+  height: 170px;
+}
+
 .page-hero {
   background: var(--hero-grad);
   color: #fff;

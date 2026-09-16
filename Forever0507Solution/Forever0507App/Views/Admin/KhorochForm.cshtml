@@ -15,7 +15,7 @@
         <div class="row justify-content-center">
             <div class="col-lg-9">
                 <div class="form-panel">
-                    <form asp-controller="Admin" asp-action="KhorochSave" method="post" id="khorochForm" novalidate>
+                    <form asp-controller="Admin" asp-action="KhorochSave" method="post" enctype="multipart/form-data" id="khorochForm" novalidate>
                         <input type="hidden" name="Id" value="@(editing?.Id ?? 0)" />
                         <div class="row g-3">
                             <div class="col-md-4">
@@ -27,6 +27,18 @@
                                 <label class="form-label" for="Description">বিবরণ (ঐচ্ছিক)</label>
                                 <input type="text" name="Description" id="Description" class="form-control" maxlength="200"
                                        placeholder="যেমন: কার্ড প্রিন্ট ও ব্যানার" value="@editing?.Description" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="image">রসিদ / ছবি</label>
+                                @if (!string.IsNullOrEmpty(editing?.ImageUrl))
+                                {
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <img src="@editing.ImageUrl" class="khoroch-img-thumb" alt="রসিদ" />
+                                        <span class="form-text mb-0">বর্তমান ছবি — নতুন দিলে বদলে যাবে।</span>
+                                    </div>
+                                }
+                                <input type="file" name="image" id="image" class="form-control" accept=".jpg,.jpeg,.png,.webp" />
+                                <div class="form-text">jpg/png/webp, সর্বোচ্চ ২ এমবি। না দিলে বর্তমান ছবিই থাকবে।</div>
                             </div>
                         </div>
 

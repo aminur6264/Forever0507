@@ -53,6 +53,29 @@
                         </dd>
                     </dl>
 
+                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                    {
+                        <div class="mb-4">
+                            <div class="small mb-1" style="color: var(--brand-muted);">রসিদ / ছবি <span class="opacity-75">(ক্লিক করে বড় করে দেখুন)</span></div>
+                            <img src="@Model.ImageUrl" class="khoroch-img-thumb khoroch-img-thumb--lg" role="button"
+                                 data-bs-toggle="modal" data-bs-target="#khorochImageModal" alt="রসিদ" title="বড় করে দেখুন" />
+                        </div>
+
+                        <div class="modal fade" id="khorochImageModal" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-lg modal-dialog-centered">
+                                <div class="modal-content rounded-4">
+                                    <div class="modal-header py-2">
+                                        <h6 class="modal-title">রসিদ / ছবি — @Model.InvoiceCode</h6>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="বন্ধ"></button>
+                                    </div>
+                                    <div class="modal-body text-center p-3">
+                                        <img src="@Model.ImageUrl" class="img-fluid rounded" alt="রসিদ" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
                     <div class="table-responsive">
                         <table class="table align-middle">
                             <thead>
