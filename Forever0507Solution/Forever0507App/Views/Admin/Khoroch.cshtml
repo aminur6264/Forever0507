@@ -5,6 +5,10 @@
     var adminNames = (Dictionary<string, string>)ViewBag.AdminNames!;
     var currentUser = (string?)ViewBag.CurrentUser ?? "";
     var sl = 0;
+
+    var approvedKhorochs = khorochs.Where(k => k.Status == Khoroch.Approved).ToList();
+    var pendingKhorochs = khorochs.Where(k => k.Status is null).ToList();
+    var rejectedKhorochs = khorochs.Where(k => k.Status == Khoroch.Rejected).ToList();
 }
 
 <div class="page-hero">
@@ -25,6 +29,34 @@
         {
             <div class="alert alert-danger rounded-4" role="alert">✕ @flashError</div>
         }
+
+        @* সারসংক্ষেপ *@
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.Taka(approvedKhorochs.Sum(k => k.Amount))</span>
+                    <span class="stat-tile__lbl">অনুমোদিত খরচ · @BengaliText.ToBengaliDigits(approvedKhorochs.Count)টি</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.Taka(pendingKhorochs.Sum(k => k.Amount))</span>
+                    <span class="stat-tile__lbl">অপেক্ষমান খরচ · @BengaliText.ToBengaliDigits(pendingKhorochs.Count)টি</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.Taka(rejectedKhorochs.Sum(k => k.Amount))</span>
+                    <span class="stat-tile__lbl">প্রত্যাখ্যাত খরচ · @BengaliText.ToBengaliDigits(rejectedKhorochs.Count)টি</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.ToBengaliDigits(khorochs.Count)টি</span>
+                    <span class="stat-tile__lbl">মোট ইনভয়েস</span>
+                </div>
+            </div>
+        </div>
 
         <div class="form-panel">
             <div class="d-flex justify-content-between align-items-center mb-3">

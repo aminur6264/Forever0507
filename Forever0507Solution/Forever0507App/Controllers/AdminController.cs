@@ -22,6 +22,16 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         ViewBag.TotalPayable = await db.PaymentMethods.SumAsync(p => (decimal?)p.Balance) ?? 0;
         ViewBag.UserCount = await db.AppUsers.CountAsync();
 
+        // Khoroch summary tiles — approved amount, pending amount/count, rejected count.
+        ViewBag.KhorochApprovedTotal = await db.Khorochs
+            .Where(k => k.Status == Models.Khoroch.Approved)
+            .SumAsync(k => (decimal?)k.Amount) ?? 0;
+        ViewBag.KhorochPendingCount = await db.Khorochs.CountAsync(k => k.Status == null);
+        ViewBag.KhorochPendingTotal = await db.Khorochs
+            .Where(k => k.Status == null)
+            .SumAsync(k => (decimal?)k.Amount) ?? 0;
+        ViewBag.KhorochRejectedCount = await db.Khorochs.CountAsync(k => k.Status == Models.Khoroch.Rejected);
+
         // District / school tallies — total and approved, busiest first.
         ViewBag.DistrictTally = await db.Registrations.AsNoTracking()
             .GroupBy(r => r.District)

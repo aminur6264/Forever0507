@@ -51,6 +51,31 @@
             </div>
         </div>
 
+        @* খরচ সারসংক্ষেপ *@
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.Taka((decimal)ViewBag.KhorochApprovedTotal)</span>
+                    <span class="stat-tile__lbl">অনুমোদিত খরচ</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.Taka((decimal)ViewBag.KhorochPendingTotal)</span>
+                    <span class="stat-tile__lbl">অপেক্ষমান খরচ · @BengaliText.ToBengaliDigits((int)ViewBag.KhorochPendingCount)টি</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.ToBengaliDigits((int)ViewBag.KhorochRejectedCount)টি</span>
+                    <span class="stat-tile__lbl">প্রত্যাখ্যাত খরচ</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3 d-flex align-items-center">
+                <a class="btn btn-outline-green w-100" asp-controller="Admin" asp-action="Khoroch">সব খরচ দেখুন →</a>
+            </div>
+        </div>
+
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="form-panel h-100">
