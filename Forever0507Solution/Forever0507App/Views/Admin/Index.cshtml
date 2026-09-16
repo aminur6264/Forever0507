@@ -1,6 +1,8 @@
 @using Forever0507App.Controllers
 @{
     ViewData["Title"] = "অ্যাডমিন ড্যাশবোর্ড";
+    var districtTally = (List<NameTally>)ViewBag.DistrictTally!;
+    var schoolTally = (List<NameTally>)ViewBag.SchoolTally!;
 }
 
 <div class="page-hero">
@@ -45,6 +47,83 @@
                 <div class="stat-tile">
                     <span class="stat-tile__num">@BengaliText.ToBengaliDigits((int)ViewBag.UserCount)</span>
                     <span class="stat-tile__lbl">সিস্টেম ব্যবহারকারী</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="form-panel h-100">
+                    <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">জেলা অনুযায়ী রেজিস্ট্রেশন</h2>
+                    @if (districtTally.Count == 0)
+                    {
+                        <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো রেজিস্ট্রেশন হয়নি।</p>
+                    }
+                    else
+                    {
+                        var maxTotal = districtTally[0].Total;
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">জেলা</th>
+                                        <th scope="col" class="text-center">মোট</th>
+                                        <th scope="col" class="text-center">অনুমোদিত</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in districtTally)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@row.Name</div>
+                                                <div class="tally-bar"><span style="width:@(maxTotal > 0 ? row.Total * 100 / maxTotal : 0)%;"></span></div>
+                                            </td>
+                                            <td class="text-center fw-semibold">@BengaliText.ToBengaliDigits(row.Total)</td>
+                                            <td class="text-center">@BengaliText.ToBengaliDigits(row.Approved)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="form-panel h-100">
+                    <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">স্কুল অনুযায়ী রেজিস্ট্রেশন</h2>
+                    @if (schoolTally.Count == 0)
+                    {
+                        <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো রেজিস্ট্রেশন হয়নি।</p>
+                    }
+                    else
+                    {
+                        var maxTotal = schoolTally[0].Total;
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">স্কুল</th>
+                                        <th scope="col" class="text-center">মোট</th>
+                                        <th scope="col" class="text-center">অনুমোদিত</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in schoolTally)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@row.Name</div>
+                                                <div class="tally-bar"><span style="width:@(maxTotal > 0 ? row.Total * 100 / maxTotal : 0)%;"></span></div>
+                                            </td>
+                                            <td class="text-center fw-semibold">@BengaliText.ToBengaliDigits(row.Total)</td>
+                                            <td class="text-center">@BengaliText.ToBengaliDigits(row.Approved)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
                 </div>
             </div>
         </div>

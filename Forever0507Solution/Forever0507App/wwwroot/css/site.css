@@ -816,6 +816,24 @@ a {
 }
 
 /* ---------- Page heroes for inner pages ---------- */
+
+/* Dashboard tally share bar */
+.tally-bar {
+  height: 4px;
+  max-width: 170px;
+  margin-top: .3rem;
+  border-radius: 999px;
+  background: rgba(20, 107, 74, .14);
+  overflow: hidden;
+}
+
+.tally-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--brand-green);
+}
+
 .page-hero {
   background: var(--hero-grad);
   color: #fff;

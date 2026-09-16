@@ -21,6 +21,29 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         ViewBag.VerifiedCount = await db.Registrations.CountAsync(r => r.PaymentStatus == PaymentVerified);
         ViewBag.TotalPayable = await db.PaymentMethods.SumAsync(p => (decimal?)p.Balance) ?? 0;
         ViewBag.UserCount = await db.AppUsers.CountAsync();
+
+        // District / school tallies — total and approved, busiest first.
+        ViewBag.DistrictTally = await db.Registrations.AsNoTracking()
+            .GroupBy(r => r.District)
+            .Select(g => new NameTally
+            {
+                Name = g.Key,
+                Total = g.Count(),
+                Approved = g.Count(x => x.ApprovalStatus == Registration.ApprovalApproved),
+            })
+            .OrderByDescending(x => x.Total).ThenBy(x => x.Name)
+            .ToListAsync();
+        ViewBag.SchoolTally = await db.Registrations.AsNoTracking()
+            .GroupBy(r => r.SchoolName)
+            .Select(g => new NameTally
+            {
+                Name = g.Key,
+                Total = g.Count(),
+                Approved = g.Count(x => x.ApprovalStatus == Registration.ApprovalApproved),
+            })
+            .OrderByDescending(x => x.Total).ThenBy(x => x.Name)
+            .ToListAsync();
+
         return View();
     }
 
