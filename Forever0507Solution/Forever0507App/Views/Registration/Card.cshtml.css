@@ -1,25 +1,2 @@
-@media print {
-    @page {
-        size: A4 portrait;
-        margin: 14mm;
-    }
-
-    header, footer, .no-print, .site-nav, .cd {
-        display: none !important;
-    }
-
-    body {
-        display: block;
-        background: #fff;
-    }
-
-    .section {
-        padding: 0;
-    }
-
-    .pass {
-        max-width: none;
-        box-shadow: none;
-        page-break-inside: avoid;
-    }
-}
+/* Print rules for this page live in the <style> block inside Card.cshtml —
+   scoped selectors here cannot reach the layout's navbar/footer chrome. */

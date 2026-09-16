@@ -3,6 +3,49 @@
     ViewData["Title"] = $"রেজিস্ট্রেশন কার্ড — {Model.RegistrationNo}";
 }
 
+@* Print outputs ONLY the .pass article: body>header/body>footer targets the layout chrome
+   precisely, so the pass's own __head/__foot bands are never caught by a generic hide. *@
+<style>
+    @@media print {
+        @@page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+
+        body {
+            background: #fff !important;
+        }
+
+        body > header,
+        body > footer,
+        .no-print,
+        .cd {
+            display: none !important;
+        }
+
+        main {
+            padding: 0 !important;
+        }
+
+        .section {
+            padding: 0 !important;
+        }
+
+        .container {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: none !important;
+        }
+
+        .pass {
+            max-width: none !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            page-break-inside: avoid;
+        }
+    }
+</style>
+
 <section class="section">
     <div class="container">
         <article class="pass">
