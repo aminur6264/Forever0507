@@ -57,6 +57,10 @@ public class Registration
     [MaxLength(11)]
     public string Phone { get; set; } = "";
 
+    /// <summary>Optional contact email; empty when the registrant skipped it.</summary>
+    [MaxLength(120)]
+    public string Email { get; set; } = "";
+
     /// <summary>Committee verifies the transaction after registration.</summary>
     public string PaymentStatus { get; set; } = "যাচাই অপেক্ষমান";
 

@@ -57,6 +57,16 @@ using (var scope = app.Services.CreateScope())
             $"ALTER TABLE EventSettings ADD LogoUrl nvarchar(200) NULL");
     }
 
+    // Same back-fill for the Registrations email column (added after first release).
+    var hasEmail = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'Registrations') AND name = N'Email'")
+        .SingleAsync();
+    if (hasEmail == 0)
+    {
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE Registrations ADD Email nvarchar(120) NOT NULL CONSTRAINT DF_Registrations_Email DEFAULT N''");
+    }
+
     await DbSeeder.SeedAsync(db, configEvent);
 
     // From here on the app reads event text from the database, not appsettings.

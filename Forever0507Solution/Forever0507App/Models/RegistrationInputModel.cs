@@ -58,6 +58,12 @@ public class RegistrationInputModel : IValidatableObject
     [Display(Name = "১১. মোবাইল নম্বর")]
     public string? Phone { get; set; }
 
+    [Required(ErrorMessage = "ইমেইল ঠিকানা দেওয়া আবশ্যক।")]
+    [EmailAddress(ErrorMessage = "সঠিক ইমেইল ঠিকানা লিখুন (যেমন: name@gmail.com)।")]
+    [StringLength(120, ErrorMessage = "ইমেইল সর্বোচ্চ ১২০ অক্ষরের হতে হবে।")]
+    [Display(Name = "১২. ইমেইল")]
+    public string? Email { get; set; }
+
     /// <summary>Final school name — dropdown value or the typed "other" name. Null when invalid.</summary>
     public string? ResolvedSchoolName
     {

@@ -50,7 +50,8 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
             FromAccount = model.FromAccount!.Trim(),
             ToAccount = model.ToAccount!.Trim(),
             JerseySize = model.JerseySize!,
-            Phone = model.Phone!.Trim()
+            Phone = model.Phone!.Trim(),
+            Email = (model.Email ?? "").Trim()
         });
 
         // A school the registrant typed in themselves joins the dropdown for everyone.

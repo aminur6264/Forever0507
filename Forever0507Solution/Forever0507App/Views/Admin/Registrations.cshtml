@@ -98,6 +98,7 @@
                                 <th scope="col">রেজি. নম্বর</th>
                                 <th scope="col">নাম</th>
                                 <th scope="col">ফোন</th>
+                                <th scope="col">ইমেইল</th>
                                 <th scope="col">পেমেন্ট মাধ্যম</th>
                                 <th scope="col">ফ্রম অ্যাকাউন্ট</th>
                                 <th scope="col">টু অ্যাকাউন্ট</th>
@@ -115,6 +116,7 @@
                                     <td class="fw-semibold">@reg.RegistrationNo</td>
                                     <td>@reg.FullName</td>
                                     <td>@reg.Phone</td>
+                                    <td>@(string.IsNullOrEmpty(reg.Email) ? "—" : reg.Email)</td>
                                     @* All registration figures render in plain ASCII digits. *@
                                     <td>@reg.PaymentMedium</td>
                                     <td>@reg.FromAccount</td>
