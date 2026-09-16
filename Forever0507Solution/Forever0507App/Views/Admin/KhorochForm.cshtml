@@ -1,0 +1,159 @@
+@{
+    ViewData["Title"] = "খরচ যোগ / সম্পাদনা";
+    var editing = ViewBag.Editing as Khoroch;
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">@(editing is null ? "নতুন খরচ" : $"খরচ সম্পাদনা — {editing.InvoiceCode}")</h1>
+        <p class="page-hero__sub mb-0">পণ্য/সেবার সারি যোগ করে মোট খরচ হিসাব হবে — সংরক্ষণের পর অন্য অ্যাডমিন অনুমোদন করবেন।</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="form-panel">
+                    <form asp-controller="Admin" asp-action="KhorochSave" method="post" id="khorochForm" novalidate>
+                        <input type="hidden" name="Id" value="@(editing?.Id ?? 0)" />
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label" for="Date">খরচের তারিখ</label>
+                                <input type="date" name="Date" id="Date" class="form-control" required
+                                       value="@(editing?.Date.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))" />
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label" for="Description">বিবরণ (ঐচ্ছিক)</label>
+                                <input type="text" name="Description" id="Description" class="form-control" maxlength="200"
+                                       placeholder="যেমন: কার্ড প্রিন্ট ও ব্যানার" value="@editing?.Description" />
+                            </div>
+                        </div>
+
+                        <h2 class="h6 fw-bold mt-4 mb-2" style="color: var(--brand-deep);">খরচের সারিসমূহ</h2>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-2">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 2rem;">ক্রম</th>
+                                        <th>পণ্য / সেবা</th>
+                                        <th style="min-width: 7rem;">পরিমাণ</th>
+                                        <th style="min-width: 8rem;">একক দাম (৳)</th>
+                                        <th style="min-width: 8rem;">মোট (৳)</th>
+                                        <th style="width: 2.5rem;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemRows">
+                                    @if (editing is not null)
+                                    {
+                                        var i = 0;
+                                        @foreach (var item in editing.Items)
+                                        {
+                                            i++;
+                                            <tr>
+                                                <td class="row-sl">@BengaliText.ToBengaliDigits(i)</td>
+                                                <td><input class="form-control" data-field="ProductName" value="@item.ProductName" placeholder="পণ্যের নাম" /></td>
+                                                <td><input class="form-control" data-field="Quantity" inputmode="decimal" value="@item.Quantity.ToString("0.##")" placeholder="যেমন: 2" /></td>
+                                                <td><input class="form-control row-price" data-field="UnitPrice" inputmode="decimal" value="@item.UnitPrice.ToString("0.##")" placeholder="যেমন: 350" /></td>
+                                                <td class="row-total fw-semibold">৳@item.LineTotal.ToString("N2")</td>
+                                                <td><button type="button" class="btn btn-sm btn-outline-danger row-remove" title="সারি বাদ">✕</button></td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-green btn-sm" id="addRow">＋ সারি যোগ করুন</button>
+                            <div class="fw-bold" style="color: var(--brand-deep);">মোট খরচ: <span id="grandTotal">৳0.00</span></div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-green px-4">সংরক্ষণ করুন</button>
+                            <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Khoroch">বাতিল</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict';
+
+            var rows = document.getElementById('itemRows');
+            var form = document.getElementById('khorochForm');
+            var grand = document.getElementById('grandTotal');
+            if (!rows || !form) return;
+
+            // Fully blank rows are skipped server-side — no client validation needed.
+            function addRow(name, qty, price) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td class="row-sl"></td>' +
+                    '<td><input class="form-control" data-field="ProductName" placeholder="পণ্যের নাম" /></td>' +
+                    '<td><input class="form-control" data-field="Quantity" inputmode="decimal" placeholder="যেমন: 2" /></td>' +
+                    '<td><input class="form-control row-price" data-field="UnitPrice" inputmode="decimal" placeholder="যেমন: 350" /></td>' +
+                    '<td class="row-total fw-semibold">—</td>' +
+                    '<td><button type="button" class="btn btn-sm btn-outline-danger row-remove" title="সারি বাদ">✕</button></td>';
+                if (name) tr.querySelector('[data-field="ProductName"]').value = name;
+                if (qty) tr.querySelector('[data-field="Quantity"]').value = qty;
+                if (price) tr.querySelector('[data-field="UnitPrice"]').value = price;
+                rows.appendChild(tr);
+                renumber();
+                tr.querySelector('[data-field="ProductName"]').focus();
+            }
+
+            function renumber() {
+                Array.prototype.forEach.call(rows.querySelectorAll('tr'), function (row, i) {
+                    row.querySelector('.row-sl').textContent = String(i + 1);
+                });
+            }
+
+            function recalc() {
+                var total = 0;
+                Array.prototype.forEach.call(rows.querySelectorAll('tr'), function (row) {
+                    var qty = parseFloat(row.querySelector('[data-field="Quantity"]').value);
+                    var price = parseFloat(row.querySelector('.row-price').value);
+                    var line = (!isNaN(qty) && !isNaN(price) && qty > 0) ? qty * price : null;
+                    row.querySelector('.row-total').textContent = line === null ? '—' : '৳' + line.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    if (line !== null) total += line;
+                });
+                grand.textContent = '৳' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+            // Rows must bind as Items[0].ProductName, Items[1].ProductName … — renumbered
+            // right before submit so removing a middle row never breaks the model binding.
+            form.addEventListener('submit', function () {
+                Array.prototype.forEach.call(rows.querySelectorAll('tr'), function (row, i) {
+                    Array.prototype.forEach.call(row.querySelectorAll('input[data-field]'), function (input) {
+                        input.name = 'Items[' + i + '].' + input.dataset.field;
+                    });
+                });
+            });
+
+            rows.addEventListener('click', function (e) {
+                var remove = e.target.closest('.row-remove');
+                if (!remove) return;
+                var body = rows.querySelectorAll('tr');
+                if (body.length > 1 || rows.querySelector('input[data-field="ProductName"]').value !== '') {
+                    remove.closest('tr').remove();
+                    if (rows.querySelectorAll('tr').length === 0) addRow();
+                }
+                renumber();
+                recalc();
+            });
+
+            rows.addEventListener('input', recalc);
+            document.getElementById('addRow').addEventListener('click', function () { addRow(); });
+
+            if (rows.querySelectorAll('tr').length === 0) addRow();
+            renumber();
+            recalc();
+        })();
+    </script>
+}

@@ -1,0 +1,99 @@
+@model Khoroch
+@{
+    ViewData["Title"] = $"খরচ বিস্তারিত — {Model.InvoiceCode}";
+    var adminNames = (Dictionary<string, string>)ViewBag.AdminNames!;
+    var decider = Model.ActionBy is null ? null : adminNames.GetValueOrDefault(Model.ActionBy, Model.ActionBy);
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">খরচ বিস্তারিত</h1>
+        <p class="page-hero__sub mb-0">ইনভয়েস @Model.InvoiceCode</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="form-panel">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                        <div>
+                            <div class="small" style="color: var(--brand-muted);">ইনভয়েস কোড</div>
+                            <div class="fs-4 fw-bold" style="color: var(--brand-deep);">@Model.InvoiceCode</div>
+                        </div>
+                        <span class="badge fs-6 @(Model.Status switch
+                        {
+                            Khoroch.Approved => "text-bg-success",
+                            Khoroch.Rejected => "text-bg-danger",
+                            _ => "text-bg-secondary",
+                        })">@(Model.Status ?? "অপেক্ষমান")</span>
+                    </div>
+
+                    <dl class="row mb-4">
+                        <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">তারিখ</dt>
+                        <dd class="col-7 col-sm-9 fw-semibold">@Model.Date.ToString("dd/MM/yyyy")</dd>
+
+                        <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">বিবরণ</dt>
+                        <dd class="col-7 col-sm-9 fw-semibold">@(string.IsNullOrEmpty(Model.Description) ? "—" : Model.Description)</dd>
+
+                        <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">নির্মাতা</dt>
+                        <dd class="col-7 col-sm-9 fw-semibold">@Model.CreatedByName</dd>
+
+                        <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">অনুমোদন/প্রত্যাখ্যান</dt>
+                        <dd class="col-7 col-sm-9 fw-semibold">
+                            @if (decider is not null && Model.ActionAt is DateTime decidedAt)
+                            {
+                                @decider <span class="small text-muted">· @decidedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                            }
+                            else
+                            {
+                                <span style="color: var(--brand-muted);">—</span>
+                            }
+                        </dd>
+                    </dl>
+
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">ক্রম</th>
+                                    <th scope="col">পণ্যের নাম</th>
+                                    <th scope="col" class="text-center">পরিমাণ</th>
+                                    <th scope="col" class="text-end">একক দাম</th>
+                                    <th scope="col" class="text-end">মোট দাম</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    var sl = 0;
+                                    foreach (var item in Model.Items)
+                                    {
+                                        sl++;
+                                        <tr>
+                                            <td>@BengaliText.ToBengaliDigits(sl)</td>
+                                            <td class="fw-semibold">@item.ProductName</td>
+                                            <td class="text-center">@item.Quantity.ToString("0.##")</td>
+                                            <td class="text-end">৳@item.UnitPrice.ToString("N2")</td>
+                                            <td class="text-end">৳@item.LineTotal.ToString("N2")</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="text-end fw-bold" style="color: var(--brand-deep);">সর্বমোট</td>
+                                    <td class="text-end fw-bold fs-5" style="color: var(--brand-deep);">৳@Model.Amount.ToString("N2")</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4 no-print">
+                        <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Khoroch">তালিকায় ফিরুন</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

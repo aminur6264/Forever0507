@@ -15,6 +15,8 @@ public class AlumniDbContext(DbContextOptions<AlumniDbContext> options) : DbCont
     public DbSet<EventSettings> EventSettings => Set<EventSettings>();
     public DbSet<WelcomeNote> WelcomeNotes => Set<WelcomeNote>();
     public DbSet<WhyJoinItem> WhyJoinItems => Set<WhyJoinItem>();
+    public DbSet<Khoroch> Khorochs => Set<Khoroch>();
+    public DbSet<KhorochItem> KhorochItems => Set<KhorochItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,5 +39,12 @@ public class AlumniDbContext(DbContextOptions<AlumniDbContext> options) : DbCont
         modelBuilder.Entity<School>().HasIndex(s => s.Name).IsUnique();
         modelBuilder.Entity<JerseySizeOption>().HasIndex(j => j.Value).IsUnique();
         modelBuilder.Entity<PaymentMediumOption>().HasIndex(m => m.Name).IsUnique();
+
+        // An invoice's items die with it.
+        modelBuilder.Entity<KhorochItem>()
+            .HasOne(i => i.Khoroch)
+            .WithMany(k => k.Items)
+            .HasForeignKey(i => i.KhorochId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

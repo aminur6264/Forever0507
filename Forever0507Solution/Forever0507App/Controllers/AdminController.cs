@@ -154,6 +154,183 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return RedirectToAction(nameof(Registrations));
     }
 
+    // ---------------- Khoroch (খরচ) — committee expense invoices ----------------
+
+    // Username → display-name map for showing who approved/rejected; the static admin's name
+    // is stored directly in ActionBy/CreatedBy, so lookups fall back to the raw value.
+    private async Task<Dictionary<string, string>> AdminNamesAsync()
+        => await db.AppUsers.AsNoTracking()
+            .Where(u => u.FullName != "")
+            .ToDictionaryAsync(u => u.Phone, u => u.FullName);
+
+    // GET /Admin/Khoroch — expense invoice list with approve/reject (never by the creator),
+    // edit-until-decided, and a details view.
+    public async Task<IActionResult> Khoroch()
+    {
+        ViewBag.Khorochs = await db.Khorochs.AsNoTracking()
+            .OrderByDescending(k => k.Id).ToListAsync();
+        ViewBag.AdminNames = await AdminNamesAsync();
+        ViewBag.CurrentUser = User.Identity!.Name;
+        return View();
+    }
+
+    // GET /Admin/KhorochForm?edit=5 — blank form, or the creator's own pending invoice.
+    public async Task<IActionResult> KhorochForm(int? edit)
+    {
+        if (edit is int id)
+        {
+            var khoroch = await db.Khorochs.AsNoTracking()
+                .Include(k => k.Items)
+                .FirstOrDefaultAsync(k => k.Id == id);
+            if (khoroch is null) return NotFound();
+
+            // Editing is the creator's privilege, and only until a decision is made.
+            if (khoroch.Status is not null || khoroch.CreatedBy != User.Identity!.Name)
+            {
+                TempData["FlashError"] = "শুধু নির্মাতা নিজেই, অনুমোদন/প্রত্যাখ্যানের আগে সম্পাদনা করতে পারবেন।";
+                return RedirectToAction(nameof(AdminController.Khoroch));
+            }
+            ViewBag.Editing = khoroch;
+        }
+        return View();
+    }
+
+    // POST /Admin/KhorochSave — create or update. The amount is always recomputed from the
+    // item rows on the server; the invoice code is stamped once from the identity Id.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> KhorochSave(KhorochInputModel model)
+    {
+        var backTo = model.Id == 0
+            ? RedirectToAction(nameof(KhorochForm))
+            : RedirectToAction(nameof(KhorochForm), new { edit = model.Id });
+
+        var items = new List<KhorochItem>();
+        foreach (var raw in model.Items)
+        {
+            // Fully blank rows (left by row-removal) are skipped, not rejected.
+            if (string.IsNullOrWhiteSpace(raw.ProductName) && string.IsNullOrWhiteSpace(raw.Quantity) && string.IsNullOrWhiteSpace(raw.UnitPrice))
+                continue;
+
+            decimal quantity = 0, unitPrice = 0;
+            var ok = decimal.TryParse(raw.Quantity, System.Globalization.CultureInfo.InvariantCulture, out quantity) && quantity > 0
+                && decimal.TryParse(raw.UnitPrice, System.Globalization.CultureInfo.InvariantCulture, out unitPrice) && unitPrice >= 0;
+            if (!ok || string.IsNullOrWhiteSpace(raw.ProductName))
+            {
+                TempData["FlashError"] = "প্রতিটি সারিতে পণ্যের নাম, পরিমাণ (০-র বেশি) ও একক দাম দিন।";
+                return backTo;
+            }
+            items.Add(new KhorochItem
+            {
+                ProductName = raw.ProductName.Trim(),
+                Quantity = quantity,
+                UnitPrice = unitPrice,
+            });
+        }
+
+        if (items.Count == 0)
+        {
+            TempData["FlashError"] = "অন্তত একটি খরচের সারি দিন।";
+            return backTo;
+        }
+
+        var me = User.Identity!.Name;
+        var meName = await db.AppUsers.AsNoTracking()
+            .Where(u => u.Phone == me)
+            .Select(u => u.FullName)
+            .FirstOrDefaultAsync();
+
+        Khoroch khoroch;
+        var isNew = model.Id == 0;
+        if (isNew)
+        {
+            khoroch = new Khoroch();
+            db.Khorochs.Add(khoroch);
+        }
+        else
+        {
+            khoroch = await db.Khorochs.Include(k => k.Items)
+                .FirstOrDefaultAsync(k => k.Id == model.Id);
+            if (khoroch is null) return NotFound();
+            if (khoroch.Status is not null || khoroch.CreatedBy != me)
+            {
+                TempData["FlashError"] = "শুধু নির্মাতা নিজেই, অনুমোদন/প্রত্যাখ্যানের আগে সম্পাদনা করতে পারবেন।";
+                return RedirectToAction(nameof(AdminController.Khoroch));
+            }
+            khoroch.Items.Clear(); // replace the old rows wholesale
+        }
+
+        khoroch.Date = model.Date;
+        khoroch.Description = (model.Description ?? "").Trim();
+        khoroch.Items.AddRange(items);
+        khoroch.Amount = items.Sum(i => i.LineTotal);
+        if (isNew)
+        {
+            khoroch.CreatedBy = me!;
+            khoroch.CreatedByName = !string.IsNullOrWhiteSpace(meName) ? meName.Trim() : me!;
+        }
+        await db.SaveChangesAsync(); // identity Id assigned here for new invoices
+
+        if (isNew)
+        {
+            // Invoice code: date + creator's name initials + auto-increment (the identity Id) —
+            // e.g. KH-20260917-AMI-0014. Same derive-after-save trick as RegistrationNo.
+            var source = !string.IsNullOrWhiteSpace(meName) ? meName : me!;
+            var initials = new string(source.Where(char.IsLetterOrDigit).Take(3).ToArray()).ToUpperInvariant();
+            if (initials.Length == 0) initials = "USR";
+            khoroch.InvoiceCode = $"KH-{khoroch.Date:yyyyMMdd}-{initials}-{khoroch.Id:D4}";
+            await db.SaveChangesAsync();
+        }
+
+        TempData["Flash"] = isNew
+            ? $"{khoroch.InvoiceCode} খরচ যোগ হয়েছে — ৳{khoroch.Amount:N0}।"
+            : $"{khoroch.InvoiceCode} আপডেট হয়েছে — ৳{khoroch.Amount:N0}।";
+        return RedirectToAction(nameof(AdminController.Khoroch));
+    }
+
+    // POST /Admin/KhorochApprove/5 — pending only; the creator can never decide their own invoice.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> KhorochApprove(int id)
+        => await DecideKhorochAsync(id, Models.Khoroch.Approved, "অনুমোদিত");
+
+    // POST /Admin/KhorochReject/5 — same rules as approval.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> KhorochReject(int id)
+        => await DecideKhorochAsync(id, Models.Khoroch.Rejected, "প্রত্যাখ্যাত");
+
+    private async Task<IActionResult> DecideKhorochAsync(int id, string status, string verb)
+    {
+        var khoroch = await db.Khorochs.FirstOrDefaultAsync(k => k.Id == id);
+        if (khoroch is null) return NotFound();
+
+        if (khoroch.CreatedBy == User.Identity!.Name)
+            TempData["FlashError"] = "নিজের তৈরি খরচ নিজে অনুমোদন বা প্রত্যাখ্যান করা যাবে না।";
+        else if (khoroch.Status is not null)
+            TempData["FlashError"] = $"{khoroch.InvoiceCode} আগেই সিদ্ধান্ত হয়ে গেছে।";
+        else
+        {
+            khoroch.Status = status;
+            khoroch.ActionBy = User.Identity!.Name;
+            khoroch.ActionAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            TempData["Flash"] = $"{khoroch.InvoiceCode} {verb} হয়েছে — ৳{khoroch.Amount:N0}।";
+        }
+        return RedirectToAction(nameof(AdminController.Khoroch));
+    }
+
+    // GET /Admin/KhorochDetails/5 — invoice header + line items.
+    public async Task<IActionResult> KhorochDetails(int id)
+    {
+        var khoroch = await db.Khorochs.AsNoTracking()
+            .Include(k => k.Items)
+            .FirstOrDefaultAsync(k => k.Id == id);
+        if (khoroch is null) return NotFound();
+        ViewBag.AdminNames = await AdminNamesAsync();
+        return View(khoroch);
+    }
+
     // POST /Admin/RejectRegistration/5 — one-way: only an undecided (null) registration can be rejected.
     [HttpPost]
     [ValidateAntiForgeryToken]

@@ -72,6 +72,41 @@ using (var scope = app.Services.CreateScope())
             $"ALTER TABLE Registrations ADD Email nvarchar(120) NOT NULL CONSTRAINT DF_Registrations_Email DEFAULT N''");
     }
 
+    // Khoroch (expense invoice) tables — created here for databases that predate the feature;
+    // column names/types mirror what EF conventions would have generated.
+    await db.Database.ExecuteSqlAsync($"""
+        IF OBJECT_ID(N'Khorochs', N'U') IS NULL
+        BEGIN
+            CREATE TABLE [Khorochs] (
+                [Id] int IDENTITY NOT NULL,
+                [InvoiceCode] nvarchar(30) NOT NULL,
+                [Date] datetime2 NOT NULL,
+                [Description] nvarchar(200) NOT NULL,
+                [Amount] decimal(12,2) NOT NULL,
+                [CreatedBy] nvarchar(50) NOT NULL,
+                [CreatedByName] nvarchar(120) NOT NULL,
+                [CreatedAt] datetime2 NOT NULL,
+                [Status] nvarchar(20) NULL,
+                [ActionBy] nvarchar(50) NULL,
+                [ActionAt] datetime2 NULL,
+                CONSTRAINT [PK_Khorochs] PRIMARY KEY ([Id]));
+        END
+        """);
+    await db.Database.ExecuteSqlAsync($"""
+        IF OBJECT_ID(N'KhorochItems', N'U') IS NULL
+        BEGIN
+            CREATE TABLE [KhorochItems] (
+                [Id] int IDENTITY NOT NULL,
+                [KhorochId] int NOT NULL,
+                [ProductName] nvarchar(160) NOT NULL,
+                [Quantity] decimal(12,2) NOT NULL,
+                [UnitPrice] decimal(12,2) NOT NULL,
+                CONSTRAINT [PK_KhorochItems] PRIMARY KEY ([Id]),
+                CONSTRAINT [FK_KhorochItems_Khorochs_KhorochId] FOREIGN KEY ([KhorochId])
+                    REFERENCES [Khorochs] ([Id]) ON DELETE CASCADE);
+        END
+        """);
+
     await DbSeeder.SeedAsync(db, configEvent);
 
     // From here on the app reads event text from the database, not appsettings.
