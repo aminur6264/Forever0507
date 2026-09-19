@@ -58,10 +58,10 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return View();
     }
 
-    // GET /Admin/Registrations?phone=&medium=&from=&to=&status=&approver= — every registration
-    // with optional filters (partial phone/account search, medium/status/approver dropdowns)
-    // plus approve/reject controls.
-    public async Task<IActionResult> Registrations(string? phone, string? medium, string? from, string? to, string? status, string? approver)
+    // GET /Admin/Registrations?phone=&medium=&from=&to=&status=&approver=&page=&pageSize= — every
+    // registration with optional filters (partial phone/account search, medium/status/approver
+    // dropdowns) plus approve/reject controls. Paginated — 30 rows per page by default.
+    public async Task<IActionResult> Registrations(string? phone, string? medium, string? from, string? to, string? status, string? approver, int page = 1, int pageSize = 30)
     {
         var registrations = db.Registrations.AsNoTracking();
 
@@ -88,7 +88,21 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         if (!string.IsNullOrWhiteSpace(approver))
             registrations = registrations.Where(r => r.ApprovalBy == approver);
 
-        ViewBag.Registrations = await registrations.OrderByDescending(r => r.Id).ToListAsync();
+        // Page-size choices the view offers; anything else (hand-edited query string) snaps back to 30.
+        if (pageSize is not (10 or 30 or 50 or 100)) pageSize = 30;
+        var totalCount = await registrations.CountAsync();
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+
+        ViewBag.Registrations = await registrations.OrderByDescending(r => r.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        ViewBag.Page = page;
+        ViewBag.PageSize = pageSize;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalCount = totalCount;
         // Approver display names, keyed by phone — regular-admin logins store the phone in ApprovalBy,
         // while the static admin stores its display name already (no row here, falls back to it).
         ViewBag.ApproverNames = await db.AppUsers.AsNoTracking()
