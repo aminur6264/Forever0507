@@ -53,15 +53,20 @@ public class RegistrationInputModel : IValidatableObject
     [Display(Name = "১০. জার্সি সাইজ")]
     public string? JerseySize { get; set; }
 
+    [Required(ErrorMessage = "জার্সিতে ছাপার জন্য নাম লিখুন।")]
+    [RegularExpression(@"^[A-Za-z][A-Za-z .'-]{1,19}$", ErrorMessage = "জার্সিতে নাম ২-২০ অক্ষরের ইংরেজি অক্ষরে লিখুন (যেমন: RAHIM UDDIN)।")]
+    [Display(Name = "১১. জার্সিতে নাম (ইংরেজিতে)")]
+    public string? NameOnJersey { get; set; }
+
     [Required(ErrorMessage = "মোবাইল নম্বর দেওয়া আবশ্যক।")]
     [RegularExpression(@"^01[3-9]\d{8}$", ErrorMessage = "সঠিক ১১ সংখ্যার মোবাইল নম্বর লিখুন (যেমন: 01712345678)।")]
-    [Display(Name = "১১. মোবাইল নম্বর")]
+    [Display(Name = "১২. মোবাইল নম্বর")]
     public string? Phone { get; set; }
 
     [Required(ErrorMessage = "ইমেইল ঠিকানা দেওয়া আবশ্যক।")]
     [EmailAddress(ErrorMessage = "সঠিক ইমেইল ঠিকানা লিখুন (যেমন: name@gmail.com)।")]
     [StringLength(120, ErrorMessage = "ইমেইল সর্বোচ্চ ১২০ অক্ষরের হতে হবে।")]
-    [Display(Name = "১২. ইমেইল")]
+    [Display(Name = "১৩. ইমেইল")]
     public string? Email { get; set; }
 
     /// <summary>Final school name — dropdown value or the typed "other" name. Null when invalid.</summary>

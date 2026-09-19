@@ -53,6 +53,10 @@ public class Registration
     [MaxLength(5)]
     public string JerseySize { get; set; } = "";
 
+    /// <summary>The name printed on the jersey — English letters, as the registrant wants it shown.</summary>
+    [MaxLength(20)]
+    public string NameOnJersey { get; set; } = "";
+
     /// <summary>11-digit BD mobile number; lookup key for the card page.</summary>
     [MaxLength(11)]
     public string Phone { get; set; } = "";

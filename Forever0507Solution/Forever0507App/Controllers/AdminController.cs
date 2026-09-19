@@ -142,7 +142,7 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
 
         string[] headers =
         [
-            "রেজি. নম্বর", "নাম", "ফোন", "ইমেইল", "জেলা", "স্কুল", "এসএসসি সাল", "জার্সি সাইজ",
+            "রেজি. নম্বর", "নাম", "ফোন", "জার্সিতে নাম", "ইমেইল", "জেলা", "স্কুল", "এসএসসি সাল", "জার্সি সাইজ",
             "পেমেন্ট মাধ্যম", "টাকার পরিমাণ", "পরিশোধযোগ্য", "ট্রানজেকশন আইডি", "ফ্রম অ্যাকাউন্ট",
             "টু অ্যাকাউন্ট", "পেমেন্ট স্ট্যাটাস", "অনুমোদন", "অনুমোদনকারী", "অনুমোদনের সময়", "রেজিস্ট্রেশনের সময়",
         ];
@@ -161,29 +161,30 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             sheet.Cell(row, 1).Value = reg.RegistrationNo;
             sheet.Cell(row, 2).Value = reg.FullName;
             sheet.Cell(row, 3).Value = reg.Phone;
-            sheet.Cell(row, 4).Value = reg.Email;
-            sheet.Cell(row, 5).Value = reg.District;
-            sheet.Cell(row, 6).Value = reg.SchoolName;
-            sheet.Cell(row, 7).Value = reg.SscYear;
-            sheet.Cell(row, 8).Value = reg.JerseySize;
-            sheet.Cell(row, 9).Value = reg.PaymentMedium;
-            sheet.Cell(row, 10).Value = reg.Amount;
-            sheet.Cell(row, 10).Style.NumberFormat.Format = "#,##0";
-            sheet.Cell(row, 11).Value = reg.PayableAmount;
+            sheet.Cell(row, 4).Value = reg.NameOnJersey;
+            sheet.Cell(row, 5).Value = reg.Email;
+            sheet.Cell(row, 6).Value = reg.District;
+            sheet.Cell(row, 7).Value = reg.SchoolName;
+            sheet.Cell(row, 8).Value = reg.SscYear;
+            sheet.Cell(row, 9).Value = reg.JerseySize;
+            sheet.Cell(row, 10).Value = reg.PaymentMedium;
+            sheet.Cell(row, 11).Value = reg.Amount;
             sheet.Cell(row, 11).Style.NumberFormat.Format = "#,##0";
-            sheet.Cell(row, 12).Value = reg.TransactionId;
-            sheet.Cell(row, 13).Value = reg.FromAccount;
-            sheet.Cell(row, 14).Value = reg.ToAccount;
-            sheet.Cell(row, 15).Value = reg.PaymentStatus;
-            sheet.Cell(row, 16).Value = reg.ApprovalStatus ?? "অপেক্ষমান";
-            sheet.Cell(row, 17).Value = approverNames.GetValueOrDefault(reg.ApprovalBy ?? "", reg.ApprovalBy ?? "");
+            sheet.Cell(row, 12).Value = reg.PayableAmount;
+            sheet.Cell(row, 12).Style.NumberFormat.Format = "#,##0";
+            sheet.Cell(row, 13).Value = reg.TransactionId;
+            sheet.Cell(row, 14).Value = reg.FromAccount;
+            sheet.Cell(row, 15).Value = reg.ToAccount;
+            sheet.Cell(row, 16).Value = reg.PaymentStatus;
+            sheet.Cell(row, 17).Value = reg.ApprovalStatus ?? "অপেক্ষমান";
+            sheet.Cell(row, 18).Value = approverNames.GetValueOrDefault(reg.ApprovalBy ?? "", reg.ApprovalBy ?? "");
             if (reg.ApprovalAt is DateTime decidedAt)
             {
-                sheet.Cell(row, 18).Value = decidedAt.ToLocalTime();
-                sheet.Cell(row, 18).Style.DateFormat.Format = "dd/MM/yyyy hh:mm AM/PM";
+                sheet.Cell(row, 19).Value = decidedAt.ToLocalTime();
+                sheet.Cell(row, 19).Style.DateFormat.Format = "dd/MM/yyyy hh:mm AM/PM";
             }
-            sheet.Cell(row, 19).Value = reg.CreatedAt.ToLocalTime();
-            sheet.Cell(row, 19).Style.DateFormat.Format = "dd/MM/yyyy hh:mm AM/PM";
+            sheet.Cell(row, 20).Value = reg.CreatedAt.ToLocalTime();
+            sheet.Cell(row, 20).Style.DateFormat.Format = "dd/MM/yyyy hh:mm AM/PM";
         }
 
         sheet.Columns().AdjustToContents(1, Math.Min(rows.Count + 1, 50));

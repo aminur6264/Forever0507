@@ -50,6 +50,7 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
             FromAccount = model.FromAccount!.Trim(),
             ToAccount = model.ToAccount!.Trim(),
             JerseySize = model.JerseySize!,
+            NameOnJersey = model.NameOnJersey!.Trim(),
             Phone = model.Phone!.Trim(),
             Email = (model.Email ?? "").Trim()
         });

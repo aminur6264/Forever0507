@@ -152,6 +152,12 @@
                                 </div>
                                 <span asp-validation-for="JerseySize" class="text-danger small"></span>
                             </div>
+                            <div class="col-md-6">
+                                <label asp-for="NameOnJersey" class="form-label"></label>
+                                <input asp-for="NameOnJersey" class="form-control text-uppercase" maxlength="20" placeholder="যেমন: RAHIM UDDIN" />
+                                <span asp-validation-for="NameOnJersey" class="text-danger small"></span>
+                                <div class="form-text">জার্সিতে যে নাম ছাপা হবে — ইংরেজি বড় হাতের অক্ষরে লিখুন (সর্বোচ্চ ২০ অক্ষর)।</div>
+                            </div>
                         </div>
 
                         <div class="fee-estimate mt-4">

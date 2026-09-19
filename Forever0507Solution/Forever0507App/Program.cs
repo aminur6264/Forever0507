@@ -72,6 +72,16 @@ using (var scope = app.Services.CreateScope())
             $"ALTER TABLE Registrations ADD Email nvarchar(120) NOT NULL CONSTRAINT DF_Registrations_Email DEFAULT N''");
     }
 
+    // Same back-fill for the jersey-name column (added after first release).
+    var hasJerseyName = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'Registrations') AND name = N'NameOnJersey'")
+        .SingleAsync();
+    if (hasJerseyName == 0)
+    {
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE Registrations ADD NameOnJersey nvarchar(20) NOT NULL CONSTRAINT DF_Registrations_NameOnJersey DEFAULT N''");
+    }
+
     // Khoroch (expense invoice) tables — created here for databases that predate the feature;
     // column names/types mirror what EF conventions would have generated.
     await db.Database.ExecuteSqlAsync($"""
