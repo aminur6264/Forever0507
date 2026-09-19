@@ -61,8 +61,8 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
 
     // GET /Admin/Registrations?phone=&medium=&from=&to=&status=&approver=&page=&pageSize= — every
     // registration with optional filters (partial phone/account search, medium/status/approver
-    // dropdowns) plus approve/reject controls. Paginated — 30 rows per page by default.
-    public async Task<IActionResult> Registrations(string? phone, string? medium, string? from, string? to, string? status, string? approver, int page = 1, int pageSize = 30)
+    // dropdowns) plus approve/reject controls. Paginated — 10 rows per page by default.
+    public async Task<IActionResult> Registrations(string? phone, string? medium, string? from, string? to, string? status, string? approver, int page = 1, int pageSize = 10)
     {
         var registrations = db.Registrations.AsNoTracking();
 
@@ -89,8 +89,8 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         if (!string.IsNullOrWhiteSpace(approver))
             registrations = registrations.Where(r => r.ApprovalBy == approver);
 
-        // Page-size choices the view offers; anything else (hand-edited query string) snaps back to 30.
-        if (pageSize is not (10 or 30 or 50 or 100)) pageSize = 30;
+        // Page-size choices the view offers; anything else (hand-edited query string) snaps back to 10.
+        if (pageSize is not (10 or 30 or 50 or 100)) pageSize = 10;
         var totalCount = await registrations.CountAsync();
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
         if (page < 1) page = 1;
@@ -198,6 +198,21 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             output.ToArray(),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"registrations-{DateTime.Now:yyyyMMdd-HHmm}.xlsx");
+    }
+
+    // GET /Admin/RegistrationDetails/5 — the list page's ডিটেলস button loads this partial into a modal.
+    [HttpGet]
+    public async Task<IActionResult> RegistrationDetails(int id)
+    {
+        var registration = await db.Registrations.AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Id == id);
+        if (registration is null) return NotFound();
+
+        var approverNames = await db.AppUsers.AsNoTracking()
+            .Where(u => u.FullName != "")
+            .ToDictionaryAsync(u => u.Phone, u => u.FullName);
+        ViewBag.ApproverName = approverNames.GetValueOrDefault(registration.ApprovalBy ?? "", registration.ApprovalBy ?? "");
+        return PartialView("_RegistrationDetails", registration);
     }
 
     // POST /Admin/ApproveRegistration/5 — one-way. Approval also credits the payable amount

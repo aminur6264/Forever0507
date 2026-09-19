@@ -1,0 +1,77 @@
+@model Registration
+@{
+    var approverName = (string?)ViewBag.ApproverName ?? "";
+    string Show(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value!;
+}
+
+<dl class="row mb-0">
+    <dt class="col-sm-4">রেজি. নম্বর</dt>
+    <dd class="col-sm-8 fw-semibold">@Model.RegistrationNo</dd>
+
+    <dt class="col-sm-4">নাম</dt>
+    <dd class="col-sm-8">@Model.FullName</dd>
+
+    <dt class="col-sm-4">ফোন</dt>
+    <dd class="col-sm-8">@Model.Phone</dd>
+
+    <dt class="col-sm-4">ইমেইল</dt>
+    <dd class="col-sm-8">@Show(Model.Email)</dd>
+
+    <dt class="col-sm-4">জেলা</dt>
+    <dd class="col-sm-8">@Model.District</dd>
+
+    <dt class="col-sm-4">স্কুল</dt>
+    <dd class="col-sm-8">@Model.SchoolName</dd>
+
+    <dt class="col-sm-4">এসএসসি সাল</dt>
+    <dd class="col-sm-8">@Model.SscYear</dd>
+
+    <dt class="col-sm-4">জার্সি সাইজ</dt>
+    <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.JerseySize) ? "—" : Model.JerseySize)</dd>
+
+    <dt class="col-sm-4">জার্সিতে নাম</dt>
+    <dd class="col-sm-8">@Show(Model.NameOnJersey)</dd>
+
+    <dt class="col-sm-4">পেমেন্ট মাধ্যম</dt>
+    <dd class="col-sm-8">@Model.PaymentMedium</dd>
+
+    <dt class="col-sm-4">টাকার পরিমাণ</dt>
+    <dd class="col-sm-8">৳@Model.Amount.ToString("N0")</dd>
+
+    <dt class="col-sm-4">পরিশোধযোগ্য</dt>
+    <dd class="col-sm-8">৳@Model.PayableAmount.ToString("N0")</dd>
+
+    <dt class="col-sm-4">ট্রানজেকশন আইডি</dt>
+    <dd class="col-sm-8">@Model.TransactionId</dd>
+
+    <dt class="col-sm-4">ফ্রম অ্যাকাউন্ট</dt>
+    <dd class="col-sm-8">@Model.FromAccount</dd>
+
+    <dt class="col-sm-4">টু অ্যাকাউন্ট</dt>
+    <dd class="col-sm-8">@Model.ToAccount</dd>
+
+    <dt class="col-sm-4">পেমেন্ট স্ট্যাটাস</dt>
+    <dd class="col-sm-8">@Model.PaymentStatus</dd>
+
+    <dt class="col-sm-4">অনুমোদন</dt>
+    <dd class="col-sm-8">
+        <span class="badge @(Model.ApprovalStatus switch
+        {
+            Registration.ApprovalApproved => "text-bg-success",
+            Registration.ApprovalRejected => "text-bg-danger",
+            _ => "text-bg-secondary",
+        })">@(Model.ApprovalStatus ?? "অপেক্ষমান")</span>
+    </dd>
+
+    <dt class="col-sm-4">অনুমোদনকারী</dt>
+    <dd class="col-sm-8">@Show(approverName)</dd>
+
+    @if (Model.ApprovalAt is DateTime decidedAt)
+    {
+        <dt class="col-sm-4">অনুমোদনের সময়</dt>
+        <dd class="col-sm-8">@decidedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+    }
+
+    <dt class="col-sm-4">রেজিস্ট্রেশনের সময়</dt>
+    <dd class="col-sm-8">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+</dl>

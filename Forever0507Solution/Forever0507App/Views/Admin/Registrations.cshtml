@@ -137,9 +137,12 @@
                                 <th scope="col">নাম</th>
                                 <th scope="col">ফোন</th>
                                 <th scope="col">জার্সিতে নাম</th>
+                                <th scope="col">জার্সি সাইজ</th>
                                 <th scope="col">ইমেইল</th>
                                 <th scope="col">পেমেন্ট মাধ্যম</th>
                                 <th scope="col">টাকার পরিমাণ</th>
+                                <th scope="col">ফ্রম অ্যাকাউন্ট</th>
+                                <th scope="col">টু অ্যাকাউন্ট</th>
                                 <th scope="col">অনুমোদন</th>
                                 <th scope="col">ট্রানজেকশন আইডি</th>
                                 <th scope="col">অনুমোদনকারী ও সময়</th>
@@ -150,14 +153,17 @@
                             @foreach (var reg in registrations)
                             {
                                 <tr>
-                                    <td class="fw-semibold">@reg.RegistrationNo</td>
-                                    <td>@reg.FullName</td>
+                                    <td class="fw-semibold text-nowrap">@reg.RegistrationNo</td>
+                                    <td class="text-nowrap">@reg.FullName</td>
                                     <td>@reg.Phone</td>
-                                    <td>@(string.IsNullOrEmpty(reg.NameOnJersey) ? "—" : reg.NameOnJersey)</td>
+                                    <td class="text-nowrap">@(string.IsNullOrEmpty(reg.NameOnJersey) ? "—" : reg.NameOnJersey)</td>
+                                    <td>@(string.IsNullOrEmpty(reg.JerseySize) ? "—" : reg.JerseySize)</td>
                                     <td>@(string.IsNullOrEmpty(reg.Email) ? "—" : reg.Email)</td>
                                     @* All registration figures render in plain ASCII digits. *@
                                     <td>@reg.PaymentMedium</td>
                                     <td>৳@reg.PayableAmount.ToString("N0")</td>
+                                    <td class="text-nowrap">@reg.FromAccount</td>
+                                    <td class="text-nowrap">@reg.ToAccount</td>
 
                                     <td>
                                         <span class="badge @(reg.ApprovalStatus switch
@@ -173,7 +179,7 @@
                                         {
                                             var approver = approverNames.GetValueOrDefault(reg.ApprovalBy ?? "", reg.ApprovalBy ?? "—");
                                             <span>@approver</span>
-                                            <div class="small text-muted">@decidedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                            <span class="ms-1 small text-muted">@decidedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
                                         }
                                         else
                                         {
@@ -197,6 +203,7 @@
                                         {
                                             <a class="btn btn-sm btn-outline-secondary" asp-controller="Registration" asp-action="Card" asp-route-id="@reg.RegistrationNo">কার্ড</a>
                                         }
+                                        <button type="button" class="btn btn-sm btn-outline-secondary js-details" data-id="@reg.Id">ডিটেলস</button>
                                     </td>
                                 </tr>
                             }
@@ -253,3 +260,37 @@
         </div>
     </div>
 </section>
+
+<div class="modal fade" id="regDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4">
+            <div class="modal-header">
+                <h5 class="modal-title">রেজিস্ট্রেশনের বিস্তারিত</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="বন্ধ করুন"></button>
+            </div>
+            <div class="modal-body" id="regDetailsBody"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('click', async (e) => {
+            const button = e.target.closest('.js-details');
+            if (!button) return;
+
+            const body = document.getElementById('regDetailsBody');
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('regDetailsModal')).show();
+
+            try {
+                const response = await fetch('/Admin/RegistrationDetails/' + button.dataset.id);
+                body.innerHTML = response.ok
+                    ? await response.text()
+                    : '<div class="alert alert-danger mb-0">বিস্তারিত লোড করা যায়নি। আবার চেষ্টা করুন।</div>';
+            } catch {
+                body.innerHTML = '<div class="alert alert-danger mb-0">বিস্তারিত লোড করা যায়নি। আবার চেষ্টা করুন।</div>';
+            }
+        });
+    </script>
+}
