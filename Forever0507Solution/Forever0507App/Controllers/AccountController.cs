@@ -64,12 +64,15 @@ public class AccountController(AlumniDbContext db) : Controller
     }
 
     // GET /Account/ChangePassword — required on first login / after admin reset; voluntary otherwise.
+    // Legacy rows can be IsAdmin + MustChangePassword together; those must still see this page,
+    // otherwise the must-change middleware and the admin redirect below bounce off each other forever.
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> ChangePassword()
     {
-        if (User.IsInRole(AuthConstants.AdminRole)) return RedirectToAction("Index", "Admin");
-        ViewBag.MustChange = User.HasClaim(AuthConstants.MustChangePasswordClaim, "true");
+        var mustChange = User.HasClaim(AuthConstants.MustChangePasswordClaim, "true");
+        if (User.IsInRole(AuthConstants.AdminRole) && !mustChange) return RedirectToAction("Index", "Admin");
+        ViewBag.MustChange = mustChange;
         return View(new ChangePasswordInputModel());
     }
 
@@ -79,7 +82,8 @@ public class AccountController(AlumniDbContext db) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ChangePassword(ChangePasswordInputModel model)
     {
-        if (User.IsInRole(AuthConstants.AdminRole)) return RedirectToAction("Index", "Admin");
+        if (User.IsInRole(AuthConstants.AdminRole) && !User.HasClaim(AuthConstants.MustChangePasswordClaim, "true"))
+            return RedirectToAction("Index", "Admin");
 
         var phone = User.Identity!.Name!;
         var user = await db.AppUsers.FirstOrDefaultAsync(u => u.Phone == phone);
@@ -170,7 +174,9 @@ public class AccountController(AlumniDbContext db) : Controller
     }
 
     private IActionResult RedirectAfterLogin()
-        => User.IsInRole(AuthConstants.AdminRole)
-            ? RedirectToAction("Index", "Admin")
-            : RedirectToAction(nameof(MyProfile));
+        => User.HasClaim(AuthConstants.MustChangePasswordClaim, "true")
+            ? RedirectToAction(nameof(ChangePassword))
+            : User.IsInRole(AuthConstants.AdminRole)
+                ? RedirectToAction("Index", "Admin")
+                : RedirectToAction(nameof(MyProfile));
 }

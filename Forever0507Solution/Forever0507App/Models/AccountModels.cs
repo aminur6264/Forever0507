@@ -35,6 +35,7 @@ public class ChangePasswordInputModel
     public string? CurrentPassword { get; set; }
 
     [Required(ErrorMessage = "নতুন পাসওয়ার্ড লিখুন।")]
+    [Compare(nameof(ConfirmPassword), ErrorMessage = "দুটি পাসওয়ার্ড এক নয়।")]
     [DataType(DataType.Password)]
     [Display(Name = "নতুন পাসওয়ার্ড")]
     public string? NewPassword { get; set; }
@@ -43,14 +44,6 @@ public class ChangePasswordInputModel
     [DataType(DataType.Password)]
     [Display(Name = "নতুন পাসওয়ার্ড (আবার)")]
     public string? ConfirmPassword { get; set; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext context)
-    {
-        if (!string.IsNullOrEmpty(NewPassword) && NewPassword != ConfirmPassword)
-            yield return new ValidationResult(
-                "দুটি পাসওয়ার্ড এক নয়।",
-                [nameof(ConfirmPassword)]);
-    }
 }
 
 public class CreateUserInputModel
