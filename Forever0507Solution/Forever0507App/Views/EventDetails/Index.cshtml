@@ -1,0 +1,108 @@
+@using Forever0507App.Models
+@{
+    ViewData["Title"] = "ইভেন্ট ডিটেলস";
+    var totalApproved = (int)ViewBag.TotalApproved!;
+    var districtTally = (List<NameTally>)ViewBag.DistrictTally!;
+    var schoolTally = (List<NameTally>)ViewBag.SchoolTally!;
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">ইভেন্ট ডিটেলস</h1>
+        <p class="page-hero__sub mb-0">অনুমোদিত রেজিস্ট্রেশনের সারসংক্ষেপ — মোট সংখ্যা, জেলা ও স্কুল অনুযায়ী। যেকোনো সংখ্যায় ক্লিক করলে তালিকা দেখা যাবে।</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+
+        <div class="form-panel mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <h2 class="h5 fw-bold mb-1" style="color: var(--brand-deep);">মোট অনুমোদিত রেজিস্ট্রেশন</h2>
+                    <p class="mb-0 small" style="color: var(--brand-muted);">ক্লিক করলে সব অনুমোদিত তালিকা দেখা যাবে।</p>
+                </div>
+                <a asp-controller="EventDetails" asp-action="List" class="display-5 fw-bold text-decoration-none"
+                   style="color: var(--brand-deep);">@totalApproved</a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="form-panel h-100">
+                    <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">জেলা অনুযায়ী রেজিস্ট্রেশন</h2>
+                    @if (districtTally.Count == 0)
+                    {
+                        <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো অনুমোদিত রেজিস্ট্রেশন নেই।</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">জেলা</th>
+                                        <th scope="col" class="text-end">সংখ্যা</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var tally in districtTally)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <a asp-controller="EventDetails" asp-action="List" asp-route-district="@tally.Name"
+                                                   class="text-decoration-none">@tally.Name</a>
+                                            </td>
+                                            <td class="text-end">
+                                                <a asp-controller="EventDetails" asp-action="List" asp-route-district="@tally.Name"
+                                                   class="badge text-bg-success text-decoration-none">@tally.Total</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="form-panel h-100">
+                    <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">স্কুল অনুযায়ী রেজিস্ট্রেশন</h2>
+                    @if (schoolTally.Count == 0)
+                    {
+                        <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো অনুমোদিত রেজিস্ট্রেশন নেই।</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">স্কুলের নাম</th>
+                                        <th scope="col" class="text-end">সংখ্যা</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var tally in schoolTally)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <a asp-controller="EventDetails" asp-action="List" asp-route-school="@tally.Name"
+                                                   class="text-decoration-none">@tally.Name</a>
+                                            </td>
+                                            <td class="text-end">
+                                                <a asp-controller="EventDetails" asp-action="List" asp-route-school="@tally.Name"
+                                                   class="badge text-bg-success text-decoration-none">@tally.Total</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

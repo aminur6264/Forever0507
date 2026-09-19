@@ -71,6 +71,7 @@
                             <li class="nav-item"><a class="nav-link" asp-controller="Registration" asp-action="Card">রেজিস্ট্রেশন কার্ড</a></li>
                             @if (User.Identity?.IsAuthenticated == true)
                             {
+                                <li class="nav-item"><a class="nav-link" asp-controller="EventDetails" asp-action="Index">ইভেন্ট ডিটেলস</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="MyProfile">আমার প্রোফাইল</a></li>
                                 <li class="nav-item ms-lg-2">
                                     <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
