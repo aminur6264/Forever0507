@@ -1,3 +1,4 @@
+using ClosedXML.Excel;
 using Forever0507App.Data;
 using Forever0507App.Helpers;
 using Forever0507App.Models;
@@ -122,6 +123,80 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         ViewBag.Status = status ?? "";
         ViewBag.Approver = approver ?? "";
         return View();
+    }
+
+    // GET /Admin/ExportRegistrations — the list page's Excel button. Exports every registration
+    // (filters and pagination ignored) as .xlsx so the committee can work with the full data offline.
+    [HttpGet]
+    public async Task<IActionResult> ExportRegistrations()
+    {
+        var rows = await db.Registrations.AsNoTracking()
+            .OrderByDescending(r => r.Id)
+            .ToListAsync();
+        var approverNames = await db.AppUsers.AsNoTracking()
+            .Where(u => u.FullName != "")
+            .ToDictionaryAsync(u => u.Phone, u => u.FullName);
+
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.Worksheets.Add("রেজিস্ট্রেশন");
+
+        string[] headers =
+        [
+            "রেজি. নম্বর", "নাম", "ফোন", "ইমেইল", "জেলা", "স্কুল", "এসএসসি সাল", "জার্সি সাইজ",
+            "পেমেন্ট মাধ্যম", "টাকার পরিমাণ", "পরিশোধযোগ্য", "ট্রানজেকশন আইডি", "ফ্রম অ্যাকাউন্ট",
+            "টু অ্যাকাউন্ট", "পেমেন্ট স্ট্যাটাস", "অনুমোদন", "অনুমোদনকারী", "অনুমোদনের সময়", "রেজিস্ট্রেশনের সময়",
+        ];
+        for (var c = 0; c < headers.Length; c++)
+        {
+            var cell = sheet.Cell(1, c + 1);
+            cell.Value = headers[c];
+            cell.Style.Font.Bold = true;
+        }
+        sheet.SheetView.FreezeRows(1);
+
+        for (var r = 0; r < rows.Count; r++)
+        {
+            var reg = rows[r];
+            var row = r + 2;
+            sheet.Cell(row, 1).Value = reg.RegistrationNo;
+            sheet.Cell(row, 2).Value = reg.FullName;
+            sheet.Cell(row, 3).Value = reg.Phone;
+            sheet.Cell(row, 4).Value = reg.Email;
+            sheet.Cell(row, 5).Value = reg.District;
+            sheet.Cell(row, 6).Value = reg.SchoolName;
+            sheet.Cell(row, 7).Value = reg.SscYear;
+            sheet.Cell(row, 8).Value = reg.JerseySize;
+            sheet.Cell(row, 9).Value = reg.PaymentMedium;
+            sheet.Cell(row, 10).Value = reg.Amount;
+            sheet.Cell(row, 10).Style.NumberFormat.Format = "#,##0";
+            sheet.Cell(row, 11).Value = reg.PayableAmount;
+            sheet.Cell(row, 11).Style.NumberFormat.Format = "#,##0";
+            sheet.Cell(row, 12).Value = reg.TransactionId;
+            sheet.Cell(row, 13).Value = reg.FromAccount;
+            sheet.Cell(row, 14).Value = reg.ToAccount;
+            sheet.Cell(row, 15).Value = reg.PaymentStatus;
+            sheet.Cell(row, 16).Value = reg.ApprovalStatus ?? "অপেক্ষমান";
+            sheet.Cell(row, 17).Value = approverNames.GetValueOrDefault(reg.ApprovalBy ?? "", reg.ApprovalBy ?? "");
+            if (reg.ApprovalAt is DateTime decidedAt)
+            {
+                sheet.Cell(row, 18).Value = decidedAt.ToLocalTime();
+                sheet.Cell(row, 18).Style.DateFormat.Format = "dd/MM/yyyy hh:mm AM/PM";
+            }
+            sheet.Cell(row, 19).Value = reg.CreatedAt.ToLocalTime();
+            sheet.Cell(row, 19).Style.DateFormat.Format = "dd/MM/yyyy hh:mm AM/PM";
+        }
+
+        sheet.Columns().AdjustToContents(1, Math.Min(rows.Count + 1, 50));
+        sheet.Range(1, 1, Math.Max(rows.Count + 1, 1), headers.Length).SetAutoFilter();
+
+        // Save to a buffer and hand MVC the bytes — a disposed MemoryStream would break the
+        // response write, and the byte[] overload sidesteps stream lifetime entirely.
+        using var output = new MemoryStream();
+        workbook.SaveAs(output);
+        return File(
+            output.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"registrations-{DateTime.Now:yyyyMMdd-HHmm}.xlsx");
     }
 
     // POST /Admin/ApproveRegistration/5 — one-way. Approval also credits the payable amount
