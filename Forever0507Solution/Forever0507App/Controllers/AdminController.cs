@@ -925,6 +925,111 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return RedirectToAction(nameof(WhyJoin));
     }
 
+    // GET /Admin/Gallery — upload/edit form on top, list with status switches below. ?edit=N prefills.
+    public async Task<IActionResult> Gallery(int? edit)
+    {
+        ViewBag.GalleryImages = await db.GalleryImages.OrderByDescending(g => g.Id).ToListAsync();
+        if (edit is int id)
+            ViewBag.Editing = await db.GalleryImages.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id);
+        return View();
+    }
+
+    // POST /Admin/SaveGallery — upload when Id is 0 (file required), edit otherwise (no file →
+    // the current image is kept). (jpg/png/webp, ≤ 2 MB) bytes go to the DB, served via /Image/Gallery/{id}.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveGallery(GalleryImageInputModel model, IFormFile? image)
+    {
+        if (model.Id == 0 && image is null)
+            ModelState.AddModelError(nameof(model.Id), "একটি ছবি নির্বাচন করুন।");
+
+        byte[]? imageData = null;
+        string? imageContentType = null;
+        if (image is not null && image.Length > 0)
+        {
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var ext = Path.GetExtension(image.FileName).ToLowerInvariant();
+            if (!allowed.Contains(ext) || image.Length > 2 * 1024 * 1024)
+            {
+                TempData["FlashError"] = "ছবি jpg/png/webp হতে হবে এবং সর্বোচ্চ ২ এমবি হতে হবে।";
+                return RedirectToAction(nameof(Gallery));
+            }
+            using var ms = new MemoryStream();
+            await image.CopyToAsync(ms);
+            imageData = ms.ToArray();
+            imageContentType = ext switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                _ => "image/webp",
+            };
+        }
+
+        if (!ModelState.IsValid)
+        {
+            TempData["FlashError"] = "ক্যাপশন লিখুন — আবার চেষ্টা করুন।";
+            return RedirectToAction(nameof(Gallery));
+        }
+
+        if (model.Id == 0)
+        {
+            db.GalleryImages.Add(new GalleryImage
+            {
+                Title = model.Title!.Trim(),
+                ImageData = imageData!,
+                ImageContentType = imageContentType!,
+                IsActive = true, // fresh uploads show on the home page right away
+            });
+        }
+        else
+        {
+            var item = await db.GalleryImages.FirstOrDefaultAsync(g => g.Id == model.Id);
+            if (item is null) return NotFound();
+            item.Title = model.Title!.Trim();
+            if (imageData is not null)
+            {
+                item.ImageData = imageData;
+                item.ImageContentType = imageContentType!;
+            }
+        }
+        await db.SaveChangesAsync();
+
+        TempData["Flash"] = model.Id == 0 ? "ছবি আপলোড হয়েছে।" : "ছবি আপডেট হয়েছে।";
+        return RedirectToAction(nameof(Gallery));
+    }
+
+    // POST /Admin/ToggleGalleryStatus/5 — flip a gallery image between active (home page) and inactive.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleGalleryStatus(int id)
+    {
+        var item = await db.GalleryImages.FirstOrDefaultAsync(g => g.Id == id);
+        if (item is not null)
+        {
+            item.IsActive = !item.IsActive;
+            await db.SaveChangesAsync();
+            TempData["Flash"] = item.IsActive
+                ? $"{item.Title} চালু করা হয়েছে।"
+                : $"{item.Title} বন্ধ করা হয়েছে।";
+        }
+        return RedirectToAction(nameof(Gallery));
+    }
+
+    // POST /Admin/DeleteGallery/5 — removes the image (and its bytes) for good.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteGallery(int id)
+    {
+        var item = await db.GalleryImages.FirstOrDefaultAsync(g => g.Id == id);
+        if (item is not null)
+        {
+            db.GalleryImages.Remove(item);
+            await db.SaveChangesAsync();
+            TempData["Flash"] = $"{item.Title} মুছে ফেলা হয়েছে।";
+        }
+        return RedirectToAction(nameof(Gallery));
+    }
+
     // GET /Admin/JerseySizes — add/edit form on top, list with status switches below. ?edit=N prefills.
     public async Task<IActionResult> JerseySizes(int? edit)
     {

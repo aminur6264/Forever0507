@@ -1,0 +1,28 @@
+@{
+    var galleryImages = (List<GalleryImage>)ViewBag.GalleryImages!;
+}
+
+@if (galleryImages.Count > 0)
+{
+    <section class="section section--alt" id="gallery">
+        <div class="container">
+            <div class="section-head">
+                <span class="section-head__eyebrow">গ্যালারি</span>
+                <h2 class="section-head__title mt-1">মুহূর্তের ছবি</h2>
+            </div>
+            <div class="row g-4">
+                @foreach (var image in galleryImages)
+                {
+                    <div class="col-6 col-lg-3">
+                        <figure class="form-panel h-100 mb-0 p-2">
+                            <img src="/Image/Gallery/@image.Id" alt="@image.Title"
+                                 class="w-100 rounded-3" style="height: 180px; object-fit: cover;" />
+                            <figcaption class="small text-center mt-2 mb-0 px-1"
+                                        style="color: var(--brand-deep);">@image.Title</figcaption>
+                        </figure>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}

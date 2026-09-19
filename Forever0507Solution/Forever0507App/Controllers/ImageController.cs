@@ -44,6 +44,20 @@ public class ImageController(AlumniDbContext db) : Controller
         return File(photo.PhotoData, NullOrEmpty(photo.PhotoContentType) ? FallbackContentType : photo.PhotoContentType!);
     }
 
+    // GET /Image/Gallery/5 — public; home-page gallery pictures.
+    [HttpGet("Gallery/{id:int}")]
+    public async Task<IActionResult> Gallery(int id)
+    {
+        var image = await db.GalleryImages.AsNoTracking()
+            .Where(g => g.Id == id)
+            .Select(g => new { g.ImageData, g.ImageContentType })
+            .FirstOrDefaultAsync();
+        if (image?.ImageData is not { Length: > 0 }) return NotFound();
+
+        Response.Headers.CacheControl = "public,max-age=300";
+        return File(image.ImageData, NullOrEmpty(image.ImageContentType) ? FallbackContentType : image.ImageContentType!);
+    }
+
     // GET /Image/Khoroch/5 — admins only; receipts are financial documents.
     [Authorize(Roles = AuthConstants.AdminRole)]
     [HttpGet("Khoroch/{id:int}")]

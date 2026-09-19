@@ -117,6 +117,22 @@ using (var scope = app.Services.CreateScope())
         END
         """);
 
+    // Home-page gallery images — created here for databases that predate the feature;
+    // column names/types mirror what EF conventions would have generated.
+    await db.Database.ExecuteSqlAsync($"""
+        IF OBJECT_ID(N'GalleryImages', N'U') IS NULL
+        BEGIN
+            CREATE TABLE [GalleryImages] (
+                [Id] int IDENTITY NOT NULL,
+                [Title] nvarchar(120) NOT NULL,
+                [ImageData] varbinary(max) NOT NULL,
+                [ImageContentType] nvarchar(50) NOT NULL,
+                [IsActive] bit NOT NULL,
+                [CreatedAt] datetime2 NOT NULL,
+                CONSTRAINT [PK_GalleryImages] PRIMARY KEY ([Id]));
+        END
+        """);
+
     // Receipt-image column on Khorochs (for rows created before the feature).
     var hasKhorochImage = await db.Database.SqlQuery<int>(
         $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'Khorochs') AND name = N'ImageUrl'")

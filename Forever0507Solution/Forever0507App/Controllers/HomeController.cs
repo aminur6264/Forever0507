@@ -18,6 +18,10 @@ namespace Forever0507App.Controllers
                 .Where(w => w.IsActive)
                 .OrderBy(w => w.Id)
                 .ToListAsync();
+            ViewBag.GalleryImages = await db.GalleryImages.AsNoTracking()
+                .Where(g => g.IsActive)
+                .OrderBy(g => g.Id)
+                .ToListAsync();
             return View();
         }
 
