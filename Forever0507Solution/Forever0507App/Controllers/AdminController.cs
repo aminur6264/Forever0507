@@ -215,6 +215,25 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return PartialView("_RegistrationDetails", registration);
     }
 
+    // GET /Admin/TallyList?type=district|school&name=... — the dashboard tally modal: clicking a
+    // মোট count fetches this partial (registration no, name, district, school) for that group.
+    [HttpGet]
+    public async Task<IActionResult> TallyList(string? type, string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return NotFound();
+
+        var registrations = db.Registrations.AsNoTracking();
+        if (type == "school")
+            registrations = registrations.Where(r => r.SchoolName == name.Trim());
+        else
+            registrations = registrations.Where(r => r.District == name.Trim());
+
+        ViewBag.Type = type == "school" ? "স্কুল" : "জেলা";
+        ViewBag.Name = name.Trim();
+        ViewBag.Items = await registrations.OrderBy(r => r.Id).ToListAsync();
+        return PartialView("_TallyRegistrations");
+    }
+
     // POST /Admin/ApproveRegistration/5 — one-way. Approval also credits the payable amount
     // to the payment-method account the money was sent to, and gives the registrant a system
     // account: username = their phone, initial password = the phone itself (changed at first login).

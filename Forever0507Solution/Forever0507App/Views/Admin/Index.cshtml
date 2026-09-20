@@ -104,7 +104,11 @@
                                                 <div class="fw-semibold">@row.Name</div>
                                                 <div class="tally-bar"><span style="width:@(maxTotal > 0 ? row.Total * 100 / maxTotal : 0)%;"></span></div>
                                             </td>
-                                            <td class="text-center fw-semibold">@BengaliText.ToBengaliDigits(row.Total)</td>
+                                            <td class="text-center fw-semibold">
+                                                <button type="button" class="btn btn-sm btn-link p-0 fw-semibold js-tally"
+                                                        data-type="district" data-name="@row.Name"
+                                                        aria-label="@row.Name জেলার তালিকা দেখুন">@BengaliText.ToBengaliDigits(row.Total)</button>
+                                            </td>
                                             <td class="text-center">@BengaliText.ToBengaliDigits(row.Approved)</td>
                                         </tr>
                                     }
@@ -141,7 +145,11 @@
                                                 <div class="fw-semibold">@row.Name</div>
                                                 <div class="tally-bar"><span style="width:@(maxTotal > 0 ? row.Total * 100 / maxTotal : 0)%;"></span></div>
                                             </td>
-                                            <td class="text-center fw-semibold">@BengaliText.ToBengaliDigits(row.Total)</td>
+                                            <td class="text-center fw-semibold">
+                                                <button type="button" class="btn btn-sm btn-link p-0 fw-semibold js-tally"
+                                                        data-type="school" data-name="@row.Name"
+                                                        aria-label="@row.Name স্কুলের তালিকা দেখুন">@BengaliText.ToBengaliDigits(row.Total)</button>
+                                            </td>
                                             <td class="text-center">@BengaliText.ToBengaliDigits(row.Approved)</td>
                                         </tr>
                                     }
@@ -154,3 +162,40 @@
         </div>
     </div>
 </section>
+
+<div class="modal fade" id="tallyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tallyModalTitle">রেজিস্ট্রেশন তালিকা</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="বন্ধ করুন"></button>
+            </div>
+            <div class="modal-body" id="tallyBody"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('click', async (e) => {
+            const button = e.target.closest('.js-tally');
+            if (!button) return;
+
+            const body = document.getElementById('tallyBody');
+            const title = document.getElementById('tallyModalTitle');
+            title.textContent = (button.dataset.type === 'school' ? 'স্কুল: ' : 'জেলা: ') + button.dataset.name;
+            body.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('tallyModal')).show();
+
+            try {
+                const response = await fetch('/Admin/TallyList?type=' + encodeURIComponent(button.dataset.type)
+                    + '&name=' + encodeURIComponent(button.dataset.name));
+                body.innerHTML = response.ok
+                    ? await response.text()
+                    : '<div class="alert alert-danger mb-0">তালিকা লোড করা যায়নি। আবার চেষ্টা করুন।</div>';
+            } catch {
+                body.innerHTML = '<div class="alert alert-danger mb-0">তালিকা লোড করা যায়নি। আবার চেষ্টা করুন।</div>';
+            }
+        });
+    </script>
+}

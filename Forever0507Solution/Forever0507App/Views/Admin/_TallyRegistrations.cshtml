@@ -1,0 +1,39 @@
+@{
+    var items = (List<Registration>)ViewBag.Items!;
+    var type = (string)ViewBag.Type!;
+    var name = (string)ViewBag.Name!;
+}
+
+@if (items.Count == 0)
+{
+    <p class="mb-0" style="color: var(--brand-muted);">কোনো রেজিস্ট্রেশন পাওয়া যায়নি।</p>
+}
+else
+{
+    <p class="mb-2 small" style="color: var(--brand-muted);">
+        @type: <span class="fw-semibold">@name</span> — মোট @BengaliText.ToBengaliDigits(items.Count)টি
+    </p>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">রেজি. নম্বর</th>
+                    <th scope="col">নাম</th>
+                    <th scope="col">জেলা</th>
+                    <th scope="col">স্কুল</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var reg in items)
+                {
+                    <tr>
+                        <td class="fw-semibold text-nowrap">@reg.RegistrationNo</td>
+                        <td>@reg.FullName</td>
+                        <td>@reg.District</td>
+                        <td>@reg.SchoolName</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
