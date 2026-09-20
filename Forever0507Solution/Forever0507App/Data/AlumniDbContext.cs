@@ -19,6 +19,7 @@ public class AlumniDbContext(DbContextOptions<AlumniDbContext> options) : DbCont
     public DbSet<KhorochItem> KhorochItems => Set<KhorochItem>();
     public DbSet<GalleryImage> GalleryImages => Set<GalleryImage>();
     public DbSet<IpAddress> IpAddresses => Set<IpAddress>();
+    public DbSet<PageVisit> PageVisits => Set<PageVisit>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -55,6 +56,13 @@ public class AlumniDbContext(DbContextOptions<AlumniDbContext> options) : DbCont
             .HasOne<IpAddress>()
             .WithMany()
             .HasForeignKey(r => r.IpAddressId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Page visits reference the visitor IP by Id only, same as registrations.
+        modelBuilder.Entity<PageVisit>()
+            .HasOne<IpAddress>()
+            .WithMany()
+            .HasForeignKey(v => v.IpId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

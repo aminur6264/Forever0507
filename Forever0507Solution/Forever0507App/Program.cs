@@ -265,6 +265,23 @@ using (var scope = app.Services.CreateScope())
             $"ALTER TABLE Registrations ADD CONSTRAINT FK_Registrations_IpAddresses_IpAddressId FOREIGN KEY (IpAddressId) REFERENCES IpAddresses(Id)");
     }
 
+    // Page-visit log — created here for databases that predate the feature; column names/types
+    // mirror what EF conventions would have generated (IpId FK is part of the table DDL because
+    // IpAddresses is guaranteed to exist by the block above).
+    await db.Database.ExecuteSqlAsync($"""
+        IF OBJECT_ID(N'PageVisits', N'U') IS NULL
+        BEGIN
+            CREATE TABLE [PageVisits] (
+                [Id] bigint IDENTITY NOT NULL,
+                [Url] nvarchar(200) NOT NULL,
+                [IpId] int NULL,
+                [VisitTime] datetime2 NOT NULL,
+                CONSTRAINT [PK_PageVisits] PRIMARY KEY ([Id]),
+                CONSTRAINT [FK_PageVisits_IpAddresses_IpId] FOREIGN KEY ([IpId])
+                    REFERENCES [IpAddresses] ([Id]));
+        END
+        """);
+
     await DbSeeder.SeedAsync(db, configEvent);
 
     // From here on the app reads event text from the database, not appsettings.
@@ -286,6 +303,57 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Page-visit logging — one PageVisits row per page open: URL, visitor IP (reusing the
+// distinct-address IpAddresses rows) and Bangladesh time (UTC+6). Only GETs count as visits;
+// static assets and image bytes are excluded. A logging failure must never break the page,
+// hence the swallow-and-continue. Rows are kept after successful responses only, so 404
+// probes don't flood the table.
+app.Use(async (context, next) =>
+{
+    await next();
+
+    var path = context.Request.Path;
+    var isStatic =
+        path.StartsWithSegments("/css") || path.StartsWithSegments("/js") || path.StartsWithSegments("/lib") ||
+        path.StartsWithSegments("/images") || path.StartsWithSegments("/Image") || path.StartsWithSegments("/uploads") ||
+        path.StartsWithSegments("/favicon") || path.StartsWithSegments("/Forever0507App.styles.css");
+
+    if (!HttpMethods.IsGet(context.Request.Method) || isStatic) return;
+    if (context.Response.StatusCode >= 400) return;
+
+    try
+    {
+        var db = context.RequestServices.GetRequiredService<AlumniDbContext>();
+        var remoteIp = context.Connection.RemoteIpAddress?.ToString();
+        int? ipId = null;
+        if (!string.IsNullOrWhiteSpace(remoteIp))
+        {
+            ipId = await db.IpAddresses.Where(i => i.Ip == remoteIp)
+                .Select(i => (int?)i.Id).FirstOrDefaultAsync();
+            if (ipId is null)
+            {
+                var ip = new IpAddress { Ip = remoteIp };
+                db.IpAddresses.Add(ip);
+                await db.SaveChangesAsync();
+                ipId = ip.Id;
+            }
+        }
+
+        var url = path + context.Request.QueryString;
+        db.PageVisits.Add(new PageVisit
+        {
+            Url = url.Length > 200 ? url[..200] : url,
+            IpId = ipId,
+            VisitTime = DateTime.UtcNow.AddHours(6), // Bangladesh time, fixed offset (no DST)
+        });
+        await db.SaveChangesAsync();
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Could not record page visit for {Path}", context.Request.Path);
+    }
+});
 
 // Users flagged MustChangePassword (first login / admin reset) may only reach the change-password
 // page (and the static assets it needs) until they set a new password.
