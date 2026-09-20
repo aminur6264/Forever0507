@@ -506,6 +506,58 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return RedirectToAction(nameof(Registrations));
     }
 
+    // GET /Admin/RegistrationEdit/5 — pre-approval fix-up form: name, jersey name, and mobile
+    // number only. Once decided (either way) a registration is final and no longer editable.
+    public async Task<IActionResult> RegistrationEdit(int id)
+    {
+        var registration = await db.Registrations.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id);
+        if (registration is null) return NotFound();
+        if (registration.ApprovalStatus is not null)
+        {
+            TempData["FlashError"] = $"{registration.RegistrationNo} সিদ্ধান্ত হয়ে গেছে — আর সম্পাদনা করা যাবে না।";
+            return RedirectToAction(nameof(Registrations));
+        }
+
+        ViewBag.Registration = registration;
+        return View(new RegistrationEditInputModel
+        {
+            Id = registration.Id,
+            FullName = registration.FullName,
+            NameOnJersey = registration.NameOnJersey,
+            Phone = registration.Phone,
+        });
+    }
+
+    // POST /Admin/RegistrationSave — same pending-only guard as the form; only the three
+    // typo-prone fields are taken from the input, everything else stays untouched.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RegistrationSave(RegistrationEditInputModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Registration = await db.Registrations.AsNoTracking().FirstOrDefaultAsync(r => r.Id == model.Id);
+            if (ViewBag.Registration is null) return NotFound();
+            return View(nameof(RegistrationEdit), model);
+        }
+
+        var registration = await db.Registrations.FirstOrDefaultAsync(r => r.Id == model.Id);
+        if (registration is null) return NotFound();
+        if (registration.ApprovalStatus is not null)
+        {
+            TempData["FlashError"] = $"{registration.RegistrationNo} সিদ্ধান্ত হয়ে গেছে — আর সম্পাদনা করা যাবে না।";
+            return RedirectToAction(nameof(Registrations));
+        }
+
+        registration.FullName = model.FullName!.Trim();
+        registration.NameOnJersey = model.NameOnJersey!.Trim();
+        registration.Phone = model.Phone!.Trim();
+        await db.SaveChangesAsync();
+
+        TempData["Flash"] = $"{registration.RegistrationNo} আপডেট হয়েছে।";
+        return RedirectToAction(nameof(Registrations));
+    }
+
     // GET /Admin/Users?search=&role= — user list with an optional name/phone search and role filter.
     public async Task<IActionResult> Users(string? search, string? role)
     {

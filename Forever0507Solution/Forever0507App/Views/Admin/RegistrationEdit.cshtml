@@ -1,0 +1,73 @@
+@model RegistrationEditInputModel
+@{
+    ViewData["Title"] = "রেজিস্ট্রেশন সম্পাদনা";
+    var registration = (Registration)ViewBag.Registration!;
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">রেজিস্ট্রেশন সম্পাদনা</h1>
+        <p class="page-hero__sub mb-0">অনুমোদনের আগে নাম, জার্সির নাম ও মোবাইল নম্বর ঠিক করা যায় — বাকি সব তথ্য অপরিবর্তিত থাকবে।</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+
+                @if (TempData["FlashError"] is string flashError)
+                {
+                    <div class="alert alert-danger rounded-4" role="alert">✕ @flashError</div>
+                }
+
+                <div class="form-panel mb-4">
+                    <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">অপরিবর্তনীয় তথ্য</h2>
+                    <dl class="row mb-0">
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">রেজি. নম্বর</dt>
+                        <dd class="col-7 col-sm-8 fw-semibold">@registration.RegistrationNo</dd>
+
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">জমার সময়</dt>
+                        <dd class="col-7 col-sm-8">@registration.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">প্রদেয়</dt>
+                        <dd class="col-7 col-sm-8">@BengaliText.Taka(registration.PayableAmount)</dd>
+
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">মাধ্যম → অ্যাকাউন্ট</dt>
+                        <dd class="col-7 col-sm-8">@registration.PaymentMedium → @registration.ToAccount</dd>
+
+                        <dt class="col-5 col-sm-4 fw-normal" style="color: var(--brand-muted);">ট্রানজেকশন আইডি</dt>
+                        <dd class="col-7 col-sm-8">@registration.TransactionId</dd>
+                    </dl>
+                </div>
+
+                <div class="form-panel">
+                    <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">সম্পাদনাযোগ্য তথ্য</h2>
+                    <form asp-controller="Admin" asp-action="RegistrationSave" method="post" novalidate>
+                        <input type="hidden" asp-for="Id" />
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="FullName"></label>
+                            <input type="text" asp-for="FullName" class="form-control" required />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="NameOnJersey"></label>
+                            <input type="text" asp-for="NameOnJersey" class="form-control" required />
+                            <span asp-validation-for="NameOnJersey" class="text-danger small"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="Phone"></label>
+                            <input type="text" asp-for="Phone" class="form-control" required maxlength="11" />
+                            <span asp-validation-for="Phone" class="text-danger small"></span>
+                            <div class="form-text">নম্বর বদলালে অনুমোদনের পরে লগইন তথ্য নতুন নম্বর দিয়েই তৈরি হবে।</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-green px-4">আপডেট করুন</button>
+                            <a class="btn btn-outline-secondary" asp-controller="Admin" asp-action="Registrations">ফিরে যান</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

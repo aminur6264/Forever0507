@@ -190,6 +190,7 @@
                                         @if (reg.ApprovalStatus is null)
                                         {
                                             @* Decision is still open — either way is final. *@
+                                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Admin" asp-action="RegistrationEdit" asp-route-id="@reg.Id">সম্পাদনা</a>
                                             <form asp-controller="Admin" asp-action="ApproveRegistration" asp-route-id="@reg.Id" method="post" class="d-inline"
                                                   onsubmit="return confirm('@reg.FullName (@reg.RegistrationNo) কে অনুমোদন করবেন? এটি আর বদলানো যাবে না।');">
                                                 <button type="submit" class="btn btn-sm btn-outline-green">অনুমোদন</button>

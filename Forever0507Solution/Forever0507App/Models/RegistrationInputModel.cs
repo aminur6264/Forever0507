@@ -107,3 +107,25 @@ public class RegistrationInputModel : IValidatableObject
         // checked against the seeded SQL Server lookup tables.
     }
 }
+
+/// <summary>Admin's pre-approval fix-up surface for a registration — only the typo-prone
+/// fields: name, jersey name, and mobile number. Payment data and amounts stay immutable.</summary>
+public class RegistrationEditInputModel
+{
+    public int Id { get; set; }
+
+    [Required(ErrorMessage = "অনুগ্রহ করে আপনার পূর্ণ নাম লিখুন।")]
+    [StringLength(120, MinimumLength = 3, ErrorMessage = "নাম কমপক্ষে ৩ অক্ষরের হতে হবে।")]
+    [Display(Name = "পূর্ণ নাম")]
+    public string? FullName { get; set; }
+
+    [Required(ErrorMessage = "জার্সিতে ছাপার জন্য নাম লিখুন।")]
+    [RegularExpression(@"^[A-Za-z][A-Za-z .'-]{1,19}$", ErrorMessage = "জার্সিতে নাম ২-২০ অক্ষরের ইংরেজি অক্ষরে লিখুন (যেমন: RAHIM UDDIN)।")]
+    [Display(Name = "জার্সিতে নাম (ইংরেজিতে)")]
+    public string? NameOnJersey { get; set; }
+
+    [Required(ErrorMessage = "মোবাইল নম্বর দেওয়া আবশ্যক।")]
+    [RegularExpression(@"^01[3-9]\d{8}$", ErrorMessage = "সঠিক ১১ সংখ্যার মোবাইল নম্বর লিখুন (যেমন: 01712345678)।")]
+    [Display(Name = "মোবাইল নম্বর")]
+    public string? Phone { get; set; }
+}
