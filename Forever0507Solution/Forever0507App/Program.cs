@@ -15,8 +15,12 @@ builder.Services
     {
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/AccessDenied";
-        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        // Persistent login: the cookie survives browser restarts and the ticket lasts a year.
+        // SlidingExpiration re-issues it after ~6 months of use, so active users stay logged in
+        // until they log out. (Browsers cap cookie MaxAge at 400 days, hence the 365d values.)
+        options.ExpireTimeSpan = TimeSpan.FromDays(365);
         options.SlidingExpiration = true;
+        options.Cookie.MaxAge = TimeSpan.FromDays(365);
     });
 
 // The "Event" section seeds the DB once; afterwards appsettings is only the fallback.
