@@ -34,7 +34,7 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             .SumAsync(k => (decimal?)k.Amount) ?? 0;
         ViewBag.KhorochRejectedCount = await db.Khorochs.CountAsync(k => k.Status == Models.Khoroch.Rejected);
 
-        // District / school tallies — total and approved, busiest first.
+        // District / school tallies — total, approved and pending, busiest first.
         ViewBag.DistrictTally = await db.Registrations.AsNoTracking()
             .GroupBy(r => r.District)
             .Select(g => new NameTally
@@ -42,6 +42,7 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
                 Name = g.Key,
                 Total = g.Count(),
                 Approved = g.Count(x => x.ApprovalStatus == Registration.ApprovalApproved),
+                Pending = g.Count(x => x.ApprovalStatus == null),
             })
             .OrderByDescending(x => x.Total).ThenBy(x => x.Name)
             .ToListAsync();
@@ -52,6 +53,7 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
                 Name = g.Key,
                 Total = g.Count(),
                 Approved = g.Count(x => x.ApprovalStatus == Registration.ApprovalApproved),
+                Pending = g.Count(x => x.ApprovalStatus == null),
             })
             .OrderByDescending(x => x.Total).ThenBy(x => x.Name)
             .ToListAsync();
@@ -215,10 +217,11 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return PartialView("_RegistrationDetails", registration);
     }
 
-    // GET /Admin/TallyList?type=district|school&name=... — the dashboard tally modal: clicking a
-    // মোট count fetches this partial (registration no, name, district, school) for that group.
+    // GET /Admin/TallyList?type=district|school&name=...&status=approved|pending — the dashboard
+    // tally modal: clicking a count fetches this partial (registration no, name, district,
+    // school) for that group; status narrows it to approved or not-yet-decided registrations.
     [HttpGet]
-    public async Task<IActionResult> TallyList(string? type, string? name)
+    public async Task<IActionResult> TallyList(string? type, string? name, string? status)
     {
         if (string.IsNullOrWhiteSpace(name)) return NotFound();
 
@@ -227,6 +230,21 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             registrations = registrations.Where(r => r.SchoolName == name.Trim());
         else
             registrations = registrations.Where(r => r.District == name.Trim());
+
+        if (status == "approved")
+        {
+            registrations = registrations.Where(r => r.ApprovalStatus == Registration.ApprovalApproved);
+            ViewBag.StatusLabel = "অনুমোদিত";
+        }
+        else if (status == "pending")
+        {
+            registrations = registrations.Where(r => r.ApprovalStatus == null);
+            ViewBag.StatusLabel = "অপেক্ষমান";
+        }
+        else
+        {
+            ViewBag.StatusLabel = null;
+        }
 
         ViewBag.Type = type == "school" ? "স্কুল" : "জেলা";
         ViewBag.Name = name.Trim();

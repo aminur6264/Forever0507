@@ -6,4 +6,7 @@ public class NameTally
     public string Name { get; set; } = "";
     public int Total { get; set; }
     public int Approved { get; set; }
+
+    /// <summary>Not yet decided — awaiting the admin's approve/reject.</summary>
+    public int Pending { get; set; }
 }

@@ -94,6 +94,7 @@
                                         <th scope="col">জেলা</th>
                                         <th scope="col" class="text-center">মোট</th>
                                         <th scope="col" class="text-center">অনুমোদিত</th>
+                                        <th scope="col" class="text-center">অপেক্ষমান</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -109,7 +110,30 @@
                                                         data-type="district" data-name="@row.Name"
                                                         aria-label="@row.Name জেলার তালিকা দেখুন">@BengaliText.ToBengaliDigits(row.Total)</button>
                                             </td>
-                                            <td class="text-center">@BengaliText.ToBengaliDigits(row.Approved)</td>
+                                            <td class="text-center fw-semibold">
+                                                @if (row.Approved > 0)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-link p-0 fw-semibold js-tally"
+                                                            data-type="district" data-name="@row.Name" data-status="approved"
+                                                            aria-label="@row.Name জেলার অনুমোদিত তালিকা দেখুন">@BengaliText.ToBengaliDigits(row.Approved)</button>
+                                                }
+                                                else
+                                                {
+                                                    <span style="color: var(--brand-muted);">@BengaliText.ToBengaliDigits(0)</span>
+                                                }
+                                            </td>
+                                            <td class="text-center fw-semibold">
+                                                @if (row.Pending > 0)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-link p-0 fw-semibold js-tally"
+                                                            data-type="district" data-name="@row.Name" data-status="pending"
+                                                            aria-label="@row.Name জেলার অপেক্ষমান তালিকা দেখুন">@BengaliText.ToBengaliDigits(row.Pending)</button>
+                                                }
+                                                else
+                                                {
+                                                    <span style="color: var(--brand-muted);">@BengaliText.ToBengaliDigits(0)</span>
+                                                }
+                                            </td>
                                         </tr>
                                     }
                                 </tbody>
@@ -135,6 +159,7 @@
                                         <th scope="col">স্কুল</th>
                                         <th scope="col" class="text-center">মোট</th>
                                         <th scope="col" class="text-center">অনুমোদিত</th>
+                                        <th scope="col" class="text-center">অপেক্ষমান</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -150,7 +175,30 @@
                                                         data-type="school" data-name="@row.Name"
                                                         aria-label="@row.Name স্কুলের তালিকা দেখুন">@BengaliText.ToBengaliDigits(row.Total)</button>
                                             </td>
-                                            <td class="text-center">@BengaliText.ToBengaliDigits(row.Approved)</td>
+                                            <td class="text-center fw-semibold">
+                                                @if (row.Approved > 0)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-link p-0 fw-semibold js-tally"
+                                                            data-type="school" data-name="@row.Name" data-status="approved"
+                                                            aria-label="@row.Name স্কুলের অনুমোদিত তালিকা দেখুন">@BengaliText.ToBengaliDigits(row.Approved)</button>
+                                                }
+                                                else
+                                                {
+                                                    <span style="color: var(--brand-muted);">@BengaliText.ToBengaliDigits(0)</span>
+                                                }
+                                            </td>
+                                            <td class="text-center fw-semibold">
+                                                @if (row.Pending > 0)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-link p-0 fw-semibold js-tally"
+                                                            data-type="school" data-name="@row.Name" data-status="pending"
+                                                            aria-label="@row.Name স্কুলের অপেক্ষমান তালিকা দেখুন">@BengaliText.ToBengaliDigits(row.Pending)</button>
+                                                }
+                                                else
+                                                {
+                                                    <span style="color: var(--brand-muted);">@BengaliText.ToBengaliDigits(0)</span>
+                                                }
+                                            </td>
                                         </tr>
                                     }
                                 </tbody>
@@ -183,13 +231,18 @@
 
             const body = document.getElementById('tallyBody');
             const title = document.getElementById('tallyModalTitle');
-            title.textContent = (button.dataset.type === 'school' ? 'স্কুল: ' : 'জেলা: ') + button.dataset.name;
+            const statusLabels = { approved: 'অনুমোদিত', pending: 'অপেক্ষমান' };
+            const status = button.dataset.status;
+            const label = (button.dataset.type === 'school' ? 'স্কুল: ' : 'জেলা: ') + button.dataset.name
+                + (statusLabels[status] ? ' — ' + statusLabels[status] : '');
+            title.textContent = label;
             body.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
             bootstrap.Modal.getOrCreateInstance(document.getElementById('tallyModal')).show();
 
             try {
                 const response = await fetch('/Admin/TallyList?type=' + encodeURIComponent(button.dataset.type)
-                    + '&name=' + encodeURIComponent(button.dataset.name));
+                    + '&name=' + encodeURIComponent(button.dataset.name)
+                    + (status ? '&status=' + encodeURIComponent(status) : ''));
                 body.innerHTML = response.ok
                     ? await response.text()
                     : '<div class="alert alert-danger mb-0">তালিকা লোড করা যায়নি। আবার চেষ্টা করুন।</div>';
