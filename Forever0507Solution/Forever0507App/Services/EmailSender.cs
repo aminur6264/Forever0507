@@ -1,6 +1,8 @@
 using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Options;
+using MimeKit;
 
 namespace Forever0507App.Services;
 
@@ -10,7 +12,7 @@ public class EmailOptions
     public const string SectionName = "Email";
 
     public string Server { get; set; } = "";
-    public int Port { get; set; } = 587;
+    public int Port { get; set; } = 465;
     public string Username { get; set; } = "";
     public string Password { get; set; } = "";
     public string FromAddress { get; set; } = "";
@@ -21,7 +23,9 @@ public class EmailOptions
     public bool IsConfigured => !string.IsNullOrWhiteSpace(Server) && !string.IsNullOrWhiteSpace(FromAddress);
 }
 
-/// <summary>The app's only outbound-email path — login credentials mailed after approval. Failures are logged, never thrown.</summary>
+/// <summary>The app's only outbound-email path — acknowledgment and credential mails. Failures are logged, never thrown.
+/// MailKit instead of System.Net.Mail.SmtpClient because typical mail-host SMTP (465) is implicit TLS,
+/// which SmtpClient cannot do (its EnableSsl is STARTTLS-only, i.e. port 587).</summary>
 public class EmailSender(IOptions<EmailOptions> options, ILogger<EmailSender> logger)
 {
     public bool IsConfigured => options.Value.IsConfigured;
@@ -34,29 +38,28 @@ public class EmailSender(IOptions<EmailOptions> options, ILogger<EmailSender> lo
 
         try
         {
-            using var client = new SmtpClient(o.Server, o.Port)
-            {
-                EnableSsl = o.EnableSsl,
-            };
+            // 465 expects TLS from the first byte; other ports negotiate STARTTLS when offered.
+            var secure = !o.EnableSsl
+                ? SecureSocketOptions.None
+                : o.Port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTlsWhenAvailable;
+
+            var from = new MailboxAddress(string.IsNullOrWhiteSpace(o.FromName) ? null : o.FromName, o.FromAddress);
+            var message = new MimeMessage();
+            message.From.Add(from);
+            message.To.Add(new MailboxAddress(null, to.Trim()));
+            message.Subject = subject;
+            message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync(o.Server, o.Port, secure);
             if (!string.IsNullOrWhiteSpace(o.Username))
-                client.Credentials = new NetworkCredential(o.Username, o.Password);
+                await client.AuthenticateAsync(new NetworkCredential(o.Username, o.Password));
 
-            var from = string.IsNullOrWhiteSpace(o.FromName)
-                ? new MailAddress(o.FromAddress)
-                : new MailAddress(o.FromAddress, o.FromName, System.Text.Encoding.UTF8);
-            using var message = new MailMessage(from, new MailAddress(to))
-            {
-                Subject = subject,
-                Body = htmlBody,
-                IsBodyHtml = true,
-                BodyEncoding = System.Text.Encoding.UTF8,
-                SubjectEncoding = System.Text.Encoding.UTF8,
-            };
-
-            // SendMailAsync honours no timeout of its own — cap the whole attempt so an
-            // unreachable SMTP server cannot stall the approval request indefinitely.
+            // SendAsync honours no timeout of its own — cap the whole attempt so an
+            // unreachable SMTP server cannot stall the registration/approval request indefinitely.
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-            await client.SendMailAsync(message, cts.Token);
+            await client.SendAsync(message, cts.Token);
+            await client.DisconnectAsync(true, cts.Token);
             return true;
         }
         catch (Exception ex)

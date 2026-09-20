@@ -263,7 +263,14 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             // password is theirs, never resent. Whatever happens, the flash says so.
             if (createdAccount)
             {
-                var emailNote = await SendLoginEmailAsync(registration, eventHolder.Current.CommunityName);
+                // Approver's display name for the email — DB admins by phone, the static
+                // admin's stored name is already its display name (falls back to it).
+                var approverNames = await db.AppUsers.AsNoTracking()
+                    .Where(u => u.FullName != "")
+                    .ToDictionaryAsync(u => u.Phone, u => u.FullName);
+                var approverName = approverNames.GetValueOrDefault(registration.ApprovalBy ?? "", registration.ApprovalBy ?? "");
+
+                var emailNote = await SendLoginEmailAsync(registration, eventHolder.Current.CommunityName, approverName);
                 TempData["Flash"] += $" {emailNote}";
             }
         }
@@ -729,9 +736,10 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return RedirectToAction(nameof(Event));
     }
 
-    // Emails the new account's credentials after approval. Returns the Bengali flash note
-    // describing the outcome — sent, skipped (no address / no SMTP), or failed.
-    private async Task<string> SendLoginEmailAsync(Registration registration, string communityName)
+    // Emails the new account's credentials after approval, naming the approving admin.
+    // Returns the Bengali flash note describing the outcome — sent, skipped (no address /
+    // no SMTP), or failed.
+    private async Task<string> SendLoginEmailAsync(Registration registration, string communityName, string approverName)
     {
         if (string.IsNullOrWhiteSpace(registration.Email))
             return "রেজিস্ট্রেন্টের ইমেইল নেই, তাই লগইন তথ্য ইমেইল করা যায়নি।";
@@ -739,13 +747,14 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             return "SMTP কনফিগার করা নেই, তাই লগইন তথ্য ইমেইল করা হয়নি।";
 
         var name = System.Net.WebUtility.HtmlEncode(registration.FullName.Trim());
+        var approver = System.Net.WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(approverName) ? "অ্যাডমিন" : approverName.Trim());
         var loginUrl = $"{Request.Scheme}://{Request.Host}/Account/Login";
         var body = $"""
             <p>সম্মানিত {name},</p>
-            <p>অভিনন্দন! আপনার রেজিস্ট্রেশন (<b>{registration.RegistrationNo}</b>) অনুমোদিত হয়েছে। এখন আপনি সাইটে লগইন করে আপনার কার্ড দেখতে পারবেন।</p>
+            <p>অভিনন্দন! আপনার রেজিস্ট্রেশন (<b>{registration.RegistrationNo}</b>) অ্যাডমিন <b>{approver}</b> অনুমোদন করেছেন। এখন আপনি সাইটে লগইন করে আপনার কার্ড দেখতে পারবেন।</p>
             <p>আপনার লগইন তথ্য:</p>
             <ul>
-                <li>ইউজারনেম: <b>{registration.Phone}</b></li>
+                <li>ইউজার আইডি: <b>{registration.Phone}</b></li>
                 <li>প্রাথমিক পাসওয়ার্ড: <b>{registration.Phone}</b></li>
             </ul>
             <p>প্রথম লগইনের সময় নিজের পছন্দের পাসওয়ার্ড সেট করে নিতে হবে।</p>

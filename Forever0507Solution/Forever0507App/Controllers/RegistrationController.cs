@@ -6,7 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Forever0507App.Controllers;
 
-public class RegistrationController(AlumniDbContext db, EventOptions eventOptions, ILogger<RegistrationController> logger) : Controller
+public class RegistrationController(AlumniDbContext db, EventOptions eventOptions,
+    Services.EmailSender emailSender, ILogger<RegistrationController> logger) : Controller
 {
     // GET /Registration/Register
     [HttpGet]
@@ -68,6 +69,8 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
 
         logger.LogInformation("New registration {RegistrationNo} for {Name}, payable {Payable}",
             registration.RegistrationNo, registration.FullName, registration.PayableAmount);
+
+        await SendAcknowledgmentEmailAsync(registration, eventOptions.CommunityName);
         return RedirectToAction(nameof(Success), new { id = registration.RegistrationNo });
     }
 
@@ -149,4 +152,30 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
                .Select(j => j.Label)
                .FirstOrDefaultAsync()
            ?? value;
+
+    // Acknowledgment mail right after a registration is saved — tells the registrant their
+    // submission is received and login credentials will follow once the admin approves it.
+    // EmailSender already logs failures, so nothing here can break the registration flow.
+    private async Task SendAcknowledgmentEmailAsync(Registration registration, string communityName)
+    {
+        if (string.IsNullOrWhiteSpace(registration.Email)) return;
+
+        var name = System.Net.WebUtility.HtmlEncode(registration.FullName.Trim());
+        var body = $"""
+            <p>সম্মানিত {name},</p>
+            <p>আপনার রেজিস্ট্রেশন ফর্মটি সফলভাবে জমা হয়েছে।</p>
+            <ul>
+                <li>রেজিস্ট্রেশন নম্বর: <b>{registration.RegistrationNo}</b></li>
+                <li>নাম: {name}</li>
+                <li>প্রদেয়: ৳{registration.PayableAmount:N0}</li>
+            </ul>
+            <p>আপনার পেমেন্ট যাচাই করে অ্যাডমিন অনুমোদন দেওয়ার পরে লগইন তথ্য এই ইমেইলে পাঠানো হবে। অনুমোদনের আগে অপেক্ষা করুন।</p>
+            <p>— {System.Net.WebUtility.HtmlEncode(communityName)}</p>
+            """;
+
+        await emailSender.SendAsync(
+            registration.Email.Trim(),
+            $"{communityName} — রেজিস্ট্রেশন গৃহীত হয়েছে, অনুমোদনের অপেক্ষায়",
+            body);
+    }
 }
