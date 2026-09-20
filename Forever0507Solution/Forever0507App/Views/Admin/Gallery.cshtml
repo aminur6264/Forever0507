@@ -2,12 +2,13 @@
     ViewData["Title"] = "গ্যালারি";
     var images = (List<GalleryImage>)ViewBag.GalleryImages!;
     var editing = ViewBag.Editing as GalleryImage;
+    var approverNames = (Dictionary<string, string>)ViewBag.ApproverNames!;
 }
 
 <div class="page-hero">
     <div class="container">
         <h1 class="page-hero__title h2 mb-1">গ্যালারি</h1>
-        <p class="page-hero__sub mb-0">হোম পেজের ছবিসমূহ — চালু ছবিগুলোই সাইটে দেখা যাবে।</p>
+        <p class="page-hero__sub mb-0">হোম পেজের ছবিসমূহ — চালু ও অনুমোদিত ছবিগুলোই সাইটে দেখা যাবে।</p>
     </div>
 </div>
 
@@ -67,7 +68,18 @@
         </div>
 
         <div class="form-panel">
-            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">ছবির তালিকা</h2>
+            <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+                <h2 class="h5 fw-bold mb-0" style="color: var(--brand-deep);">ছবির তালিকা</h2>
+                <form method="get" class="d-flex align-items-center gap-2">
+                    <label class="form-label mb-0" for="status">স্ট্যাটাস</label>
+                    <select name="status" id="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">সব</option>
+                        <option value="pending" selected="@(ViewBag.Status == "pending")">অপেক্ষমান</option>
+                        <option value="approved" selected="@(ViewBag.Status == "approved")">অনুমোদিত</option>
+                        <option value="rejected" selected="@(ViewBag.Status == "rejected")">প্রত্যাখ্যাত</option>
+                    </select>
+                </form>
+            </div>
             @if (images.Count == 0)
             {
                 <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো ছবি আপলোড করা হয়নি।</p>
@@ -80,13 +92,17 @@
                             <tr>
                                 <th scope="col">ছবি</th>
                                 <th scope="col">ক্যাপশন</th>
-                                <th scope="col">স্ট্যাটাস</th>
+                                <th scope="col">আপলোডকারী</th>
+                                <th scope="col">অনুমোদন</th>
+                                <th scope="col">অনুমোদনকারী</th>
+                                <th scope="col">সাইটে দেখা</th>
                                 <th scope="col"></th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var item in images)
                             {
+                                var approver = item.ApprovalBy is null ? null : approverNames.GetValueOrDefault(item.ApprovalBy, item.ApprovalBy);
                                 <tr>
                                     <td>
                                         <a href="/Image/Gallery/@item.Id" target="_blank">
@@ -95,18 +111,57 @@
                                         </a>
                                     </td>
                                     <td class="fw-semibold">@item.Title</td>
+                                    <td>@item.UploadedByName</td>
                                     <td>
-                                        <form asp-controller="Admin" asp-action="ToggleGalleryStatus" asp-route-id="@item.Id" method="post" class="d-inline align-middle">
-                                            <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary") me-2">@(item.IsActive ? "চালু" : "বন্ধ")</span>
-                                            <div class="form-check form-switch d-inline-block m-0 align-middle">
-                                                <input class="form-check-input" type="checkbox" role="switch" name="on" value="1" @(item.IsActive ? "checked" : "")
-                                                       onchange="if (confirm('@(item.IsActive ? $"{item.Title} বন্ধ করবেন?" : $"{item.Title} চালু করবেন?")')) this.form.submit(); else this.checked = !this.checked;"
-                                                       title="চালু ↔ বন্ধ" />
-                                            </div>
-                                        </form>
+                                        <span class="badge @(item.ApprovalStatus switch
+                                        {
+                                            GalleryImage.ApprovalApproved => "text-bg-success",
+                                            GalleryImage.ApprovalRejected => "text-bg-danger",
+                                            _ => "text-bg-secondary",
+                                        })">@(item.ApprovalStatus ?? "অপেক্ষমান")</span>
+                                    </td>
+                                    <td class="text-nowrap">
+                                        @if (item.ApprovalAt is DateTime decidedAt)
+                                        {
+                                            <span>@approver</span>
+                                            <span class="ms-1 small text-muted">@decidedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="color: var(--brand-muted);">—</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.ApprovalStatus == GalleryImage.ApprovalApproved)
+                                        {
+                                            <form asp-controller="Admin" asp-action="ToggleGalleryStatus" asp-route-id="@item.Id" method="post" class="d-inline align-middle">
+                                                <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary") me-2">@(item.IsActive ? "চালু" : "বন্ধ")</span>
+                                                <div class="form-check form-switch d-inline-block m-0 align-middle">
+                                                    <input class="form-check-input" type="checkbox" role="switch" name="on" value="1" @(item.IsActive ? "checked" : "")
+                                                           onchange="if (confirm('@(item.IsActive ? $"{item.Title} বন্ধ করবেন?" : $"{item.Title} চালু করবেন?")')) this.form.submit(); else this.checked = !this.checked;"
+                                                           title="চালু ↔ বন্ধ" />
+                                                </div>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="small" style="color: var(--brand-muted);">অনুমোদনের পরে</span>
+                                        }
                                     </td>
                                     <td class="text-end text-nowrap">
-                                        <a class="btn btn-sm btn-outline-green" asp-controller="Admin" asp-action="Gallery" asp-route-edit="@item.Id">সম্পাদনা</a>
+                                        @if (item.ApprovalStatus is null)
+                                        {
+                                            @* Decision is still open — either way is final. *@
+                                            <form asp-controller="Admin" asp-action="GalleryApprove" asp-route-id="@item.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('@item.Title অনুমোদন করবেন? এটি হোম পেজে দেখা যাবে।');">
+                                                <button type="submit" class="btn btn-sm btn-outline-green">অনুমোদন</button>
+                                            </form>
+                                            <form asp-controller="Admin" asp-action="GalleryReject" asp-route-id="@item.Id" method="post" class="d-inline ms-1"
+                                                  onsubmit="return confirm('@item.Title প্রত্যাখ্যান করবেন? আপলোডকারী এটি সম্পাদনা করে আবার পাঠাতে পারবেন।');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">প্রত্যাখ্যান</button>
+                                            </form>
+                                        }
+                                        <a class="btn btn-sm btn-outline-green @(item.ApprovalStatus is null ? "ms-1" : "")" asp-controller="Admin" asp-action="Gallery" asp-route-edit="@item.Id">সম্পাদনা</a>
                                         <form asp-controller="Admin" asp-action="DeleteGallery" asp-route-id="@item.Id" method="post" class="d-inline ms-1"
                                               onsubmit="return confirm('@item.Title মুছে ফেলবেন? এটি আর ফেরত আসবে না।');">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">মুছুন</button>

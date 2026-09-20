@@ -925,10 +925,20 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         return RedirectToAction(nameof(WhyJoin));
     }
 
-    // GET /Admin/Gallery — upload/edit form on top, list with status switches below. ?edit=N prefills.
-    public async Task<IActionResult> Gallery(int? edit)
+    // GET /Admin/Gallery?status=&edit=N — upload/edit form on top, list with approval actions
+    // below. ?edit=N prefills; ?status= filters the list (pending/approved/rejected).
+    public async Task<IActionResult> Gallery(string? status, int? edit)
     {
-        ViewBag.GalleryImages = await db.GalleryImages.OrderByDescending(g => g.Id).ToListAsync();
+        var images = db.GalleryImages.AsNoTracking();
+        if (status == "pending") images = images.Where(g => g.ApprovalStatus == null);
+        else if (status == "approved") images = images.Where(g => g.ApprovalStatus == GalleryImage.ApprovalApproved);
+        else if (status == "rejected") images = images.Where(g => g.ApprovalStatus == GalleryImage.ApprovalRejected);
+
+        ViewBag.GalleryImages = await images.OrderByDescending(g => g.Id).ToListAsync();
+        // Approver display names, keyed by phone — the static admin stores its display name
+        // directly in ApprovalBy, so lookups fall back to the raw value.
+        ViewBag.ApproverNames = await AdminNamesAsync();
+        ViewBag.Status = status ?? "";
         if (edit is int id)
             ViewBag.Editing = await db.GalleryImages.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id);
         return View();
@@ -973,12 +983,24 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
 
         if (model.Id == 0)
         {
+            var me = User.Identity!.Name;
+            var meName = await db.AppUsers.AsNoTracking()
+                .Where(u => u.Phone == me)
+                .Select(u => u.FullName)
+                .FirstOrDefaultAsync();
+
             db.GalleryImages.Add(new GalleryImage
             {
                 Title = model.Title!.Trim(),
                 ImageData = imageData!,
                 ImageContentType = imageContentType!,
                 IsActive = true, // fresh uploads show on the home page right away
+                UploadedBy = me!,
+                UploadedByName = !string.IsNullOrWhiteSpace(meName) ? meName.Trim() : me!,
+                // Admin uploads publish immediately — the admin is their own approver.
+                ApprovalStatus = GalleryImage.ApprovalApproved,
+                ApprovalBy = me,
+                ApprovalAt = DateTime.UtcNow,
             });
         }
         else
@@ -996,6 +1018,38 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
 
         TempData["Flash"] = model.Id == 0 ? "ছবি আপলোড হয়েছে।" : "ছবি আপডেট হয়েছে।";
         return RedirectToAction(nameof(Gallery));
+    }
+
+    // POST /Admin/GalleryApprove/5 — one-way: only an undecided (pending) user upload can be
+    // approved. Approval publishes it on the home page (subject to the IsActive switch).
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GalleryApprove(int id)
+        => await DecideGalleryAsync(id, GalleryImage.ApprovalApproved, "অনুমোদিত");
+
+    // POST /Admin/GalleryReject/5 — same rules as approval; the uploader may edit + resubmit,
+    // which returns the upload to pending.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GalleryReject(int id)
+        => await DecideGalleryAsync(id, GalleryImage.ApprovalRejected, "প্রত্যাখ্যাত");
+
+    private async Task<IActionResult> DecideGalleryAsync(int id, string status, string verb)
+    {
+        var item = await db.GalleryImages.FirstOrDefaultAsync(g => g.Id == id);
+        if (item is null) return NotFound();
+
+        if (item.ApprovalStatus is not null)
+            TempData["FlashError"] = $"{item.Title} আগেই সিদ্ধান্ত হয়ে গেছে।";
+        else
+        {
+            item.ApprovalStatus = status;
+            item.ApprovalBy = User.Identity!.Name;
+            item.ApprovalAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            TempData["Flash"] = $"{item.Title} {verb} হয়েছে।";
+        }
+        return RedirectToAction(nameof(AdminController.Gallery));
     }
 
     // POST /Admin/ToggleGalleryStatus/5 — flip a gallery image between active (home page) and inactive.

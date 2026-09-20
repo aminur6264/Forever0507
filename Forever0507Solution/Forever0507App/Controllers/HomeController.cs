@@ -19,7 +19,7 @@ namespace Forever0507App.Controllers
                 .OrderBy(w => w.Id)
                 .ToListAsync();
             ViewBag.GalleryImages = await db.GalleryImages.AsNoTracking()
-                .Where(g => g.IsActive)
+                .Where(g => g.IsActive && g.ApprovalStatus == GalleryImage.ApprovalApproved)
                 .OrderBy(g => g.Id)
                 .ToListAsync();
             return View();

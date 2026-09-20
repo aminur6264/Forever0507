@@ -1,0 +1,132 @@
+@{
+    ViewData["Title"] = "আমার গ্যালারি";
+    var myImages = (List<GalleryImage>)ViewBag.MyImages!;
+    var editing = ViewBag.Editing as GalleryImage;
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">গ্যালারি</h1>
+        <p class="page-hero__sub mb-0">নিজের তোলা ছবি আপলোড করুন — অ্যাডমিন অনুমোদনের পরে হোম পেজে দেখা যাবে।</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+
+        @if (TempData["Flash"] is string flash)
+        {
+            <div class="alert alert-success rounded-4" role="alert">✓ @flash</div>
+        }
+        @if (TempData["FlashError"] is string flashError)
+        {
+            <div class="alert alert-danger rounded-4" role="alert">✕ @flashError</div>
+        }
+
+        <div class="form-panel mb-4">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">
+                @(editing is null ? "নতুন ছবি আপলোড করুন" : "ছবি সম্পাদনা")
+            </h2>
+            <form asp-controller="Gallery" asp-action="Save" method="post" enctype="multipart/form-data" novalidate>
+                <input type="hidden" name="Id" value="@(editing?.Id ?? 0)" />
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="Title">ক্যাপশন</label>
+                        <input type="text" name="Title" id="Title" class="form-control" required maxlength="120"
+                               value="@editing?.Title" placeholder="যেমন: বন্ধুদের সাথে মুহূর্ত" />
+                        <div class="form-text">ছবির নিচে এই লেখাটি দেখা যাবে।</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="image">ছবি</label>
+                        <input type="file" name="image" id="image" class="form-control"
+                               accept=".jpg,.jpeg,.png,.webp" required="@(editing is null)" />
+                        <div class="form-text">
+                            jpg/png/webp, সর্বোচ্চ ২ এমবি।
+                            @if (editing is not null)
+                            {
+                                <span>নতুন ছবি না দিলে পুরোনোটিই থাকবে।</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                @if (editing is not null)
+                {
+                    <div class="mt-3">
+                        <img src="/Image/Gallery/@editing.Id" alt="@editing.Title"
+                             style="max-height: 160px;" class="rounded-3 border" />
+                    </div>
+                }
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-green px-4">@(editing is null ? "জমা দিন" : "আপডেট করুন")</button>
+                    @if (editing is not null)
+                    {
+                        <a class="btn btn-outline-secondary" asp-controller="Gallery" asp-action="Index">নতুন আপলোডে ফিরুন</a>
+                    }
+                </div>
+            </form>
+        </div>
+
+        <div class="form-panel">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">আমার জমা দেওয়া ছবি</h2>
+            @if (myImages.Count == 0)
+            {
+                <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো ছবি জমা দেননি — উপরের ফর্ম থেকে প্রথম ছবিটি পাঠান।</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col">ছবি</th>
+                                <th scope="col">ক্যাপশন</th>
+                                <th scope="col">অনুমোদন</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in myImages)
+                            {
+                                <tr>
+                                    <td>
+                                        <a href="/Image/Gallery/@item.Id" target="_blank">
+                                            <img src="/Image/Gallery/@item.Id" alt="@item.Title"
+                                                 style="height: 56px; width: auto;" class="rounded border" />
+                                        </a>
+                                    </td>
+                                    <td class="fw-semibold">@item.Title</td>
+                                    <td>
+                                        <span class="badge @(item.ApprovalStatus switch
+                                        {
+                                            GalleryImage.ApprovalApproved => "text-bg-success",
+                                            GalleryImage.ApprovalRejected => "text-bg-danger",
+                                            _ => "text-bg-secondary",
+                                        })">@(item.ApprovalStatus ?? "অপেক্ষমান")</span>
+                                        @if (item.ApprovalStatus == GalleryImage.ApprovalApproved)
+                                        {
+                                            <div class="small mt-1" style="color: var(--brand-muted);">ওয়েবসাইটে দেখা যাচ্ছে — এখন আর বদলানো যাবে না।</div>
+                                        }
+                                        else if (item.ApprovalStatus == GalleryImage.ApprovalRejected)
+                                        {
+                                            <div class="small mt-1" style="color: var(--brand-muted);">সম্পাদনা করে পুনরায় জমা দিতে পারেন, অথবা মুছে ফেলুন।</div>
+                                        }
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        @if (item.ApprovalStatus != GalleryImage.ApprovalApproved)
+                                        {
+                                            <a class="btn btn-sm btn-outline-green" asp-controller="Gallery" asp-action="Index" asp-route-edit="@item.Id">সম্পাদনা</a>
+                                            <form asp-controller="Gallery" asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline ms-1"
+                                                  onsubmit="return confirm('@item.Title মুছে ফেলবেন? এটি আর ফেরত আসবে না।');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">মুছুন</button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</section>

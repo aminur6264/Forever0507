@@ -44,17 +44,27 @@ public class ImageController(AlumniDbContext db) : Controller
         return File(photo.PhotoData, NullOrEmpty(photo.PhotoContentType) ? FallbackContentType : photo.PhotoContentType!);
     }
 
-    // GET /Image/Gallery/5 — public; home-page gallery pictures.
+    // GET /Image/Gallery/5 — public once approved; pending/rejected user uploads are visible
+    // only to their uploader and admins (an <img> tag can't follow a login redirect, hence the
+    // bare 404). Approval is one-way (pending-only), so a URL never flips public → private and
+    // the mixed cache headers stay safe.
     [HttpGet("Gallery/{id:int}")]
     public async Task<IActionResult> Gallery(int id)
     {
         var image = await db.GalleryImages.AsNoTracking()
             .Where(g => g.Id == id)
-            .Select(g => new { g.ImageData, g.ImageContentType })
+            .Select(g => new { g.ImageData, g.ImageContentType, g.ApprovalStatus, g.UploadedBy })
             .FirstOrDefaultAsync();
         if (image?.ImageData is not { Length: > 0 }) return NotFound();
 
-        Response.Headers.CacheControl = "public,max-age=300";
+        var isPublic = image.ApprovalStatus == GalleryImage.ApprovalApproved;
+        if (!isPublic)
+        {
+            var isUploader = User.Identity?.IsAuthenticated == true && User.Identity.Name == image.UploadedBy;
+            if (!isUploader && !User.IsInRole(AuthConstants.AdminRole)) return NotFound();
+        }
+
+        Response.Headers.CacheControl = isPublic ? "public,max-age=300" : "private,max-age=300";
         return File(image.ImageData, NullOrEmpty(image.ImageContentType) ? FallbackContentType : image.ImageContentType!);
     }
 

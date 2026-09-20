@@ -133,9 +133,76 @@ using (var scope = app.Services.CreateScope())
                 [ImageContentType] nvarchar(50) NOT NULL,
                 [IsActive] bit NOT NULL,
                 [CreatedAt] datetime2 NOT NULL,
+                [UploadedBy] nvarchar(50) NOT NULL,
+                [UploadedByName] nvarchar(120) NOT NULL,
+                [ApprovalStatus] nvarchar(20) NULL,
+                [ApprovalBy] nvarchar(50) NULL,
+                [ApprovalAt] datetime2 NULL,
                 CONSTRAINT [PK_GalleryImages] PRIMARY KEY ([Id]));
         END
         """);
+
+    // Gallery uploader/approval columns (added after first release) — these back-fills are
+    // deliberately one-time (inside the column-missing branch): after the feature ships,
+    // ApprovalStatus IS NULL means "genuinely pending", so an every-startup UPDATE would
+    // silently approve pending uploads on each app-pool recycle.
+    var hasGalleryUploadedBy = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'GalleryImages') AND name = N'UploadedBy'")
+        .SingleAsync();
+    if (hasGalleryUploadedBy == 0)
+    {
+        // Pre-feature rows were all admin uploads — stamp them so no real user phone ever matches.
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE GalleryImages ADD UploadedBy nvarchar(50) NOT NULL CONSTRAINT DF_GalleryImages_UploadedBy DEFAULT N''");
+        await db.Database.ExecuteSqlAsync(
+            $"UPDATE GalleryImages SET UploadedBy = N'সিস্টেম অ্যাডমিন' WHERE UploadedBy = N''");
+    }
+
+    var hasGalleryUploadedByName = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'GalleryImages') AND name = N'UploadedByName'")
+        .SingleAsync();
+    if (hasGalleryUploadedByName == 0)
+    {
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE GalleryImages ADD UploadedByName nvarchar(120) NOT NULL CONSTRAINT DF_GalleryImages_UploadedByName DEFAULT N''");
+        await db.Database.ExecuteSqlAsync(
+            $"UPDATE GalleryImages SET UploadedByName = N'সিস্টেম অ্যাডমিন' WHERE UploadedByName = N''");
+    }
+
+    var hasGalleryApprovalBy = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'GalleryImages') AND name = N'ApprovalBy'")
+        .SingleAsync();
+    if (hasGalleryApprovalBy == 0)
+    {
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE GalleryImages ADD ApprovalBy nvarchar(50) NULL");
+    }
+
+    var hasGalleryApprovalAt = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'GalleryImages') AND name = N'ApprovalAt'")
+        .SingleAsync();
+    if (hasGalleryApprovalAt == 0)
+    {
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE GalleryImages ADD ApprovalAt datetime2 NULL");
+    }
+
+    var hasGalleryApprovalStatus = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'GalleryImages') AND name = N'ApprovalStatus'")
+        .SingleAsync();
+    if (hasGalleryApprovalStatus == 0)
+    {
+        // Last of the gallery blocks — ApprovalBy/ApprovalAt already exist, so the one-time
+        // legacy back-fill can stamp the whole decision in a single UPDATE. Pre-feature rows
+        // were admin uploads and publish immediately, hence approved by the static admin.
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE GalleryImages ADD ApprovalStatus nvarchar(20) NULL");
+        await db.Database.ExecuteSqlAsync($"""
+            UPDATE GalleryImages
+            SET ApprovalStatus = N'অনুমোদিত', ApprovalBy = N'সিস্টেম অ্যাডমিন', ApprovalAt = SYSUTCDATETIME()
+            WHERE ApprovalStatus IS NULL
+            """);
+    }
 
     // Receipt-image column on Khorochs (for rows created before the feature).
     var hasKhorochImage = await db.Database.SqlQuery<int>(
