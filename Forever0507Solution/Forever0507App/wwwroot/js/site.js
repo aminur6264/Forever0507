@@ -36,3 +36,74 @@
     render();
     setInterval(render, 1000);
 })();
+
+// Gallery lightbox — clicking a home-page gallery shot opens it full-width; arrow buttons
+// (and ←/→ keys) step through the shots, Esc or a backdrop click closes.
+(function () {
+    'use strict';
+
+    var box = document.getElementById('galleryLightbox');
+    var shots = Array.prototype.slice.call(document.querySelectorAll('.gallery-shot'));
+    if (!box || shots.length === 0) return;
+
+    var BN = '০১২৩৪৫৬৭৮৯';
+    var img = box.querySelector('.lightbox__img');
+    var caption = box.querySelector('.lightbox__caption');
+    var count = box.querySelector('.lightbox__count');
+    var prev = box.querySelector('[data-lightbox-prev]');
+    var next = box.querySelector('[data-lightbox-next]');
+    var current = 0;
+
+    // One picture in the gallery needs no stepping UI.
+    if (shots.length < 2) {
+        prev.style.display = 'none';
+        next.style.display = 'none';
+        count.style.display = 'none';
+    }
+
+    function show(index) {
+        current = (index + shots.length) % shots.length;
+        var shot = shots[current];
+        img.src = shot.dataset.full;
+        img.alt = shot.dataset.caption;
+        caption.textContent = shot.dataset.caption;
+        count.textContent = bn(current + 1) + ' / ' + bn(shots.length);
+    }
+
+    function bn(value) {
+        return String(value).replace(/\d/g, function (d) { return BN[+d]; });
+    }
+
+    function open(index) {
+        show(index);
+        box.hidden = false;
+        document.body.style.overflow = 'hidden';
+        box.querySelector('[data-lightbox-close]').focus();
+    }
+
+    function close() {
+        box.hidden = true;
+        img.src = '';
+        document.body.style.overflow = '';
+    }
+
+    shots.forEach(function (shot, index) {
+        shot.addEventListener('click', function () { open(index); });
+    });
+
+    prev.addEventListener('click', function () { show(current - 1); });
+    next.addEventListener('click', function () { show(current + 1); });
+    box.querySelector('[data-lightbox-close]').addEventListener('click', close);
+
+    // Clicking the dark backdrop (not the picture or a control) closes.
+    box.addEventListener('click', function (e) {
+        if (e.target === box) close();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (box.hidden) return;
+        if (e.key === 'Escape') close();
+        else if (e.key === 'ArrowLeft' && shots.length > 1) show(current - 1);
+        else if (e.key === 'ArrowRight' && shots.length > 1) show(current + 1);
+    });
+})();
