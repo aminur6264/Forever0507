@@ -275,12 +275,24 @@ using (var scope = app.Services.CreateScope())
                 [Id] bigint IDENTITY NOT NULL,
                 [Url] nvarchar(200) NOT NULL,
                 [IpId] int NULL,
+                [UserId] int NULL,
                 [VisitTime] datetime2 NOT NULL,
                 CONSTRAINT [PK_PageVisits] PRIMARY KEY ([Id]),
                 CONSTRAINT [FK_PageVisits_IpAddresses_IpId] FOREIGN KEY ([IpId])
                     REFERENCES [IpAddresses] ([Id]));
         END
         """);
+
+    // PageVisits.UserId (added after first release of the visit log) — a loose reference to
+    // AppUsers with no FK, so removing a user can never be blocked by their past visits.
+    var hasPageVisitUser = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'PageVisits') AND name = N'UserId'")
+        .SingleAsync();
+    if (hasPageVisitUser == 0)
+    {
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE PageVisits ADD UserId int NULL");
+    }
 
     await DbSeeder.SeedAsync(db, configEvent);
 
@@ -340,11 +352,23 @@ app.Use(async (context, next) =>
             }
         }
 
+        // Logged-in account id; null when anonymous. The NameIdentifier claim IS the AppUsers.Id
+        // for DB accounts, but the static admin carries its numeric login name there instead —
+        // so the parsed value is confirmed against AppUsers and stays null when there's no row.
+        int? userId = null;
+        if (context.User.Identity?.IsAuthenticated == true
+            && int.TryParse(context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var uid))
+        {
+            userId = await db.AppUsers.Where(u => u.Id == uid)
+                .Select(u => (int?)u.Id).FirstOrDefaultAsync();
+        }
+
         var url = path + context.Request.QueryString;
         db.PageVisits.Add(new PageVisit
         {
             Url = url.Length > 200 ? url[..200] : url,
             IpId = ipId,
+            UserId = userId,
             VisitTime = DateTime.UtcNow.AddHours(6), // Bangladesh time, fixed offset (no DST)
         });
         await db.SaveChangesAsync();
