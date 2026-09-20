@@ -18,6 +18,7 @@ public class AlumniDbContext(DbContextOptions<AlumniDbContext> options) : DbCont
     public DbSet<Khoroch> Khorochs => Set<Khoroch>();
     public DbSet<KhorochItem> KhorochItems => Set<KhorochItem>();
     public DbSet<GalleryImage> GalleryImages => Set<GalleryImage>();
+    public DbSet<IpAddress> IpAddresses => Set<IpAddress>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,5 +48,13 @@ public class AlumniDbContext(DbContextOptions<AlumniDbContext> options) : DbCont
             .WithMany(k => k.Items)
             .HasForeignKey(i => i.KhorochId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Registrations reference the captured submitter IP by Id only (no navigation);
+        // the IP record must survive even if registrations were ever removed.
+        modelBuilder.Entity<Registration>()
+            .HasOne<IpAddress>()
+            .WithMany()
+            .HasForeignKey(r => r.IpAddressId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -38,6 +38,30 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
 
         var schoolName = model.ResolvedSchoolName!;
 
+        // Record the submitter's IP (never shown anywhere). Known IPs are reused, so the
+        // IpAddresses table holds one row per distinct address. A capture failure must never
+        // block the registration, hence the swallow-and-continue.
+        int? ipId = null;
+        try
+        {
+            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            if (!string.IsNullOrWhiteSpace(remoteIp))
+            {
+                var ipRow = await db.IpAddresses.FirstOrDefaultAsync(i => i.Ip == remoteIp);
+                if (ipRow is null)
+                {
+                    ipRow = new IpAddress { Ip = remoteIp };
+                    db.IpAddresses.Add(ipRow);
+                    await db.SaveChangesAsync(); // identity Id assigned here for the FK below
+                }
+                ipId = ipRow.Id;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Could not record submitter IP for registration");
+        }
+
         db.Add(new Registration
         {
             FullName = model.FullName.Trim(),
@@ -53,7 +77,8 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
             JerseySize = model.JerseySize!,
             NameOnJersey = model.NameOnJersey!.Trim(),
             Phone = model.Phone!.Trim(),
-            Email = (model.Email ?? "").Trim()
+            Email = (model.Email ?? "").Trim(),
+            IpAddressId = ipId,
         });
 
         // A school the registrant typed in themselves joins the dropdown for everyone.

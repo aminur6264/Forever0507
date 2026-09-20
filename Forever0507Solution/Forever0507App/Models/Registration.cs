@@ -82,5 +82,9 @@ public class Registration
     public const string ApprovalApproved = "অনুমোদিত";
     public const string ApprovalRejected = "প্রত্যাখ্যাত";
 
+    /// <summary>Submitter's IP, stored as IpAddresses.Id at registration time — record-keeping
+    /// only, never displayed. Null for registrations made before this was captured.</summary>
+    public int? IpAddressId { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

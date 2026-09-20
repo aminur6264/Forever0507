@@ -234,6 +234,37 @@ using (var scope = app.Services.CreateScope())
             await db.Database.ExecuteSqlAsync($"EXEC({sql})");
     }
 
+    // Registration IP capture — table created here for databases that predate the feature;
+    // column names/types mirror what EF conventions would have generated.
+    await db.Database.ExecuteSqlAsync($"""
+        IF OBJECT_ID(N'IpAddresses', N'U') IS NULL
+        BEGIN
+            CREATE TABLE [IpAddresses] (
+                [Id] int IDENTITY NOT NULL,
+                [Ip] nvarchar(45) NOT NULL,
+                [City] nvarchar(80) NULL,
+                [State] nvarchar(80) NULL,
+                [CountryShortName] nvarchar(10) NULL,
+                [CountryFullName] nvarchar(80) NULL,
+                [TimeZone] nvarchar(80) NULL,
+                [CreatedAt] datetime2 NOT NULL,
+                CONSTRAINT [PK_IpAddresses] PRIMARY KEY ([Id]));
+        END
+        """);
+
+    // Registrations.IpAddressId — the FK is added together with the column so the paired
+    // constraint only ever runs once, on databases that predate the feature.
+    var hasRegIpAddress = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'Registrations') AND name = N'IpAddressId'")
+        .SingleAsync();
+    if (hasRegIpAddress == 0)
+    {
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE Registrations ADD IpAddressId int NULL");
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE Registrations ADD CONSTRAINT FK_Registrations_IpAddresses_IpAddressId FOREIGN KEY (IpAddressId) REFERENCES IpAddresses(Id)");
+    }
+
     await DbSeeder.SeedAsync(db, configEvent);
 
     // From here on the app reads event text from the database, not appsettings.
