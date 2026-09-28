@@ -1043,7 +1043,7 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
     }
 
     // POST /Admin/SaveGallery — upload when Id is 0 (file required), edit otherwise (no file →
-    // the current image is kept). (jpg/png/webp, ≤ 2 MB) bytes go to the DB, served via /Image/Gallery/{id}.
+    // the current image is kept). (jpg/png/webp) bytes go to the DB, served via /Image/Gallery/{id}.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveGallery(GalleryImageInputModel model, IFormFile? image)
@@ -1057,9 +1057,9 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         {
             var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
             var ext = Path.GetExtension(image.FileName).ToLowerInvariant();
-            if (!allowed.Contains(ext) || image.Length > 2 * 1024 * 1024)
+            if (!allowed.Contains(ext))
             {
-                TempData["FlashError"] = "ছবি jpg/png/webp হতে হবে এবং সর্বোচ্চ ২ এমবি হতে হবে।";
+                TempData["FlashError"] = "ছবি jpg/png/webp হতে হবে।";
                 return RedirectToAction(nameof(Gallery));
             }
             using var ms = new MemoryStream();

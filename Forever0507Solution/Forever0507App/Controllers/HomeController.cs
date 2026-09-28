@@ -18,9 +18,16 @@ namespace Forever0507App.Controllers
                 .Where(w => w.IsActive)
                 .OrderBy(w => w.Id)
                 .ToListAsync();
+            return View();
+        }
+
+        // GET /Home/Gallery — the photo gallery lives on its own page so the home page
+        // doesn't pull every picture's bytes on load.
+        public async Task<IActionResult> Gallery()
+        {
             ViewBag.GalleryImages = await db.GalleryImages.AsNoTracking()
                 .Where(g => g.IsActive && g.ApprovalStatus == GalleryImage.ApprovalApproved)
-                .OrderBy(g => g.Id)
+                .OrderByDescending(g => g.Id)
                 .ToListAsync();
             return View();
         }

@@ -1,15 +1,19 @@
 @{
+    ViewData["Title"] = "ফটো গ্যালারি";
     var galleryImages = (List<GalleryImage>)ViewBag.GalleryImages!;
 }
 
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">মুহূর্তের ছবি</h1>
+        <p class="page-hero__sub mb-0">বন্ধুদের পাঠানো ছবিতে জড়িয়ে থাকা আয়োজনের স্মৃতি।</p>
+    </div>
+</div>
+
 @if (galleryImages.Count > 0)
 {
-    <section class="section section--alt" id="gallery">
+    <section class="section">
         <div class="container">
-            <div class="section-head">
-                <span class="section-head__eyebrow">গ্যালারি</span>
-                <h2 class="section-head__title mt-1">মুহূর্তের ছবি</h2>
-            </div>
             <div class="row g-4">
                 @foreach (var image in galleryImages)
                 {
@@ -18,7 +22,7 @@
                             <button type="button" class="gallery-shot"
                                     data-full="/Image/Gallery/@image.Id" data-caption="@image.Title"
                                     aria-label="@image.Title — বড় করে দেখুন">
-                                <img src="/Image/Gallery/@image.Id" alt="@image.Title"
+                                <img src="/Image/Gallery/@image.Id" alt="@image.Title" loading="lazy"
                                      class="w-100 rounded-3" style="height: 180px; object-fit: cover;" />
                             </button>
                             <figcaption class="small text-center mt-2 mb-0 px-1"
@@ -41,4 +45,16 @@
         <button type="button" class="lightbox__nav lightbox__nav--next" data-lightbox-next aria-label="পরের ছবি">&#10095;</button>
         <div class="lightbox__count"></div>
     </div>
+}
+else
+{
+    <section class="section">
+        <div class="container">
+            <div class="form-panel text-center">
+                <p class="mb-0" style="color: var(--brand-muted);">
+                    এখনো কোনো ছবি যোগ করা হয়নি — অনুমোদনের পরে ছবিগুলো এখানে দেখা যাবে।
+                </p>
+            </div>
+        </div>
+    </section>
 }

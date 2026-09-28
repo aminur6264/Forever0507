@@ -43,9 +43,9 @@ public class GalleryController(AlumniDbContext db) : Controller
         {
             var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
             var ext = Path.GetExtension(image.FileName).ToLowerInvariant();
-            if (!allowed.Contains(ext) || image.Length > 2 * 1024 * 1024)
+            if (!allowed.Contains(ext))
             {
-                TempData["FlashError"] = "ছবি jpg/png/webp হতে হবে এবং সর্বোচ্চ ২ এমবি হতে হবে।";
+                TempData["FlashError"] = "ছবি jpg/png/webp হতে হবে।";
                 return backTo;
             }
             using var ms = new MemoryStream();
