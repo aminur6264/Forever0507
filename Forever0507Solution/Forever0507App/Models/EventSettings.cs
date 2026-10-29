@@ -46,6 +46,9 @@ public class EventSettings
     [MaxLength(10)]
     public string TimeZoneOffset { get; set; } = "+06:00";
 
+    /// <summary>Asia/Dhaka wall-clock deadline for new registrations. Null → registrations never close.</summary>
+    public DateTime? RegEndDate { get; set; }
+
     [MaxLength(160)]
     public string Venue { get; set; } = "";
 
@@ -75,6 +78,7 @@ public class EventSettings
         EstablishedNote = o.EstablishedNote,
         StartTime = o.StartTime,
         TimeZoneOffset = o.TimeZoneOffset,
+        RegEndDate = o.RegEndDate,
         Venue = o.Venue,
         Address = o.Address,
         ContactPhone = o.ContactPhone,
@@ -97,6 +101,7 @@ public class EventSettings
         EstablishedNote = EstablishedNote,
         StartTime = StartTime,
         TimeZoneOffset = TimeZoneOffset,
+        RegEndDate = RegEndDate,
         Venue = Venue,
         Address = Address,
         ContactPhone = ContactPhone,
@@ -115,6 +120,7 @@ public class EventSettings
         EstablishedNote = m.EstablishedNote.Trim();
         StartTime = m.StartTime;
         TimeZoneOffset = m.TimeZoneOffset.Trim();
+        RegEndDate = m.RegEndDate;
         Venue = m.Venue.Trim();
         Address = m.Address.Trim();
         ContactPhone = m.ContactPhone.Trim();
@@ -158,6 +164,9 @@ public class EventSettingsInputModel
     [RegularExpression(@"^[+-]\d{2}:\d{2}$", ErrorMessage = "সঠিক টাইমজোন অফসেট দিন (যেমন: +06:00)।")]
     [Display(Name = "টাইমজোন অফসেট")]
     public string TimeZoneOffset { get; set; } = "+06:00";
+
+    [Display(Name = "রেজিস্ট্রেশন শেষ সময়")]
+    public DateTime? RegEndDate { get; set; }
 
     [Required(ErrorMessage = "ভেন্যু লিখুন।")]
     [Display(Name = "ভেন্যু")]

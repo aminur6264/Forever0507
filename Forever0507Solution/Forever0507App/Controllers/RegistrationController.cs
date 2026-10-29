@@ -24,6 +24,15 @@ public class RegistrationController(AlumniDbContext db, EventOptions eventOption
     {
         await PopulateLookupsAsync();
 
+        // Past the configured deadline (Dhaka wall clock) no new submissions are accepted —
+        // the UI hides the form too, but a stale open tab or a hand-crafted post lands here.
+        if (eventOptions.RegistrationClosed)
+        {
+            ModelState.AddModelError(string.Empty,
+                "রেজিস্ট্রেশনের সময় শেষ হয়ে গেছে — নতুন রেজিস্ট্রেশন নেওয়া হচ্ছে না।");
+            return View(model);
+        }
+
         // Lookup values must exist in the seeded tables (client can only post what we offered).
         if (!string.IsNullOrEmpty(model.District) && !await db.Districts.AnyAsync(d => d.Name == model.District))
             ModelState.AddModelError(nameof(model.District), "সঠিক জেলা নির্বাচন করুন।");

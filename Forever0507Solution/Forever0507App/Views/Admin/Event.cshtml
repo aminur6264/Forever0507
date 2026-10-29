@@ -61,6 +61,18 @@
                     <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">শুরুর সময়</dt>
                     <dd class="col-7 col-sm-9 fw-semibold">@settings.StartTime.ToString("dd/MM/yyyy HH:mm") (@settings.TimeZoneOffset)</dd>
 
+                    <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">রেজিস্ট্রেশন শেষ</dt>
+                    <dd class="col-7 col-sm-9 fw-semibold">
+                        @if (settings.RegEndDate is { } regEnd)
+                        {
+                            <text>@regEnd.ToString("dd/MM/yyyy HH:mm") (@settings.TimeZoneOffset)</text>
+                        }
+                        else
+                        {
+                            <span style="color: var(--brand-muted);">নির্ধারিত নয় — রেজিস্ট্রেশন বন্ধ হবে না</span>
+                        }
+                    </dd>
+
                     <dt class="col-5 col-sm-3 fw-normal" style="color: var(--brand-muted);">ভেন্যু</dt>
                     <dd class="col-7 col-sm-9 fw-semibold">@settings.Venue</dd>
 
@@ -133,6 +145,12 @@
                             <label class="form-label" for="StartTime">শুরুর সময়</label>
                             <input type="datetime-local" name="StartTime" id="StartTime" class="form-control" required
                                    value="@(settings?.StartTime.ToString("yyyy-MM-ddTHH:mm"))" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="RegEndDate">রেজিস্ট্রেশন শেষ সময়</label>
+                            <input type="datetime-local" name="RegEndDate" id="RegEndDate" class="form-control"
+                                   value="@(settings?.RegEndDate?.ToString("yyyy-MM-ddTHH:mm"))" />
+                            <div class="form-text">খালি রাখলে রেজিস্ট্রেশন বন্ধ হবে না। সময় দিলে ওই মুহূর্তের পর নতুন রেজিস্ট্রেশন নেওয়া হবে না।</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="Venue">ভেন্যু</label>

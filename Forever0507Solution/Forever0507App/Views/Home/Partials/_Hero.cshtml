@@ -34,7 +34,14 @@
         </p>
 
         <div class="d-flex gap-3 justify-content-center flex-wrap mb-5">
-            <a class="btn btn-gold btn-lg px-4" asp-controller="Registration" asp-action="Register">রেজিস্ট্রেশন করুন</a>
+            @if (Event.RegistrationClosed)
+            {
+                <span class="btn btn-gold btn-lg px-4 disabled" aria-disabled="true">রেজিস্ট্রেশন শেষ</span>
+            }
+            else
+            {
+                <a class="btn btn-gold btn-lg px-4" asp-controller="Registration" asp-action="Register">রেজিস্ট্রেশন করুন</a>
+            }
             <a class="btn btn-outline-cream btn-lg px-4" asp-controller="Registration" asp-action="Card">রেজিস্ট্রেশন কার্ড ডাউনলোড</a>
         </div>
 

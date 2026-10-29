@@ -26,6 +26,9 @@ public class EventOptions
     public DateTime StartTime { get; set; }
     public string TimeZoneOffset { get; set; } = "+06:00";
 
+    /// <summary>Asia/Dhaka wall-clock deadline for new registrations. Null → registrations never close.</summary>
+    public DateTime? RegEndDate { get; set; }
+
     public string Venue { get; set; } = "";
     public string Address { get; set; } = "";
     public string ContactPhone { get; set; } = "";
@@ -41,6 +44,34 @@ public class EventOptions
     public string[] Schools { get; set; } = [];
 
     private static readonly CultureInfo BengaliCulture = new("bn-BD");
+
+    /// <summary>The offset as a TimeSpan, with the sign repaired (config binding can strip a leading '+')
+    /// and +06:00 as the fallback when nothing parseable is stored.</summary>
+    private TimeSpan OffsetSpan
+    {
+        get
+        {
+            var offset = (TimeZoneOffset ?? "").Trim();
+            if (offset.Length > 0 && offset[0] != '+' && offset[0] != '-')
+                offset = "+" + offset;
+            return TimeSpan.TryParse(offset, CultureInfo.InvariantCulture, out var span)
+                ? span
+                : TimeSpan.FromHours(6);
+        }
+    }
+
+    /// <summary>Dhaka wall clock rebuilt from UTC and the configured fixed offset (no DST).</summary>
+    public DateTime DhakaNow => DateTime.UtcNow + OffsetSpan;
+
+    /// <summary>True once the configured deadline has passed — new registrations are rejected from then on.</summary>
+    public bool RegistrationClosed => RegEndDate is { } end && DhakaNow > end;
+
+    /// <summary>Human-readable Bengali deadline, e.g. "০৫ নভেম্বর ২০২৬, বিকাল ০৫:০০". Null when unset.</summary>
+    public string? RegEndDateBn => RegEndDate is { } end
+        ? Helpers.BengaliText.ToBengaliDigits(end.ToString("dd MMMM yyyy", BengaliCulture)) +
+          ", " + Helpers.BengaliText.ToBengaliDigits(end.ToString("hh:mm", BengaliCulture)) +
+          (end.Hour < 12 ? " সকাল" : " বিকাল")
+        : null;
 
     /// <summary>Deterministic ISO-8601 string handed to the JS countdown, e.g. "2026-11-06T10:00:00+06:00".
     /// The offset's sign is repaired on the way out — a stored "06:00" (leading + lost) still yields valid ISO.</summary>

@@ -88,7 +88,14 @@
                                 <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Login">লগইন</a></li>
                             }
                             <li class="nav-item ms-lg-2">
-                                <a class="btn btn-gold btn-sm px-3" asp-controller="Registration" asp-action="Register">রেজিস্ট্রেশন করুন</a>
+                                @if (Event.RegistrationClosed)
+                                {
+                                    <span class="btn btn-gold btn-sm px-3 disabled" aria-disabled="true">রেজিস্ট্রেশন শেষ</span>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-gold btn-sm px-3" asp-controller="Registration" asp-action="Register">রেজিস্ট্রেশন করুন</a>
+                                }
                             </li>
                         }
                     </ul>

@@ -42,7 +42,14 @@
                         <p class="mb-3" style="color: var(--brand-muted);">
                             এই ফোন নম্বরে কোনো রেজিস্ট্রেশন পাওয়া যায়নি।
                         </p>
-                        <a class="btn btn-green btn-sm" asp-controller="Registration" asp-action="Register">এখনই রেজিস্ট্রেশন করুন</a>
+                        @if (Event.RegistrationClosed)
+                        {
+                            <span class="btn btn-green btn-sm disabled" aria-disabled="true">রেজিস্ট্রেশন শেষ হয়েছে</span>
+                        }
+                        else
+                        {
+                            <a class="btn btn-green btn-sm" asp-controller="Registration" asp-action="Register">এখনই রেজিস্ট্রেশন করুন</a>
+                        }
                     }
                     else
                     {

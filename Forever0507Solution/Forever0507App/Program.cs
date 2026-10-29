@@ -66,6 +66,17 @@ using (var scope = app.Services.CreateScope())
             $"ALTER TABLE EventSettings ADD LogoUrl nvarchar(200) NULL");
     }
 
+    // Same back-fill for the registration-deadline column (added after first release) —
+    // NULL means registration never closes.
+    var hasRegEndDate = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'EventSettings') AND name = N'RegEndDate'")
+        .SingleAsync();
+    if (hasRegEndDate == 0)
+    {
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE EventSettings ADD RegEndDate datetime2 NULL");
+    }
+
     // Same back-fill for the Registrations email column (added after first release).
     var hasEmail = await db.Database.SqlQuery<int>(
         $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'Registrations') AND name = N'Email'")
