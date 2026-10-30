@@ -1,0 +1,193 @@
+@{
+    ViewData["Title"] = "ডোনেশন";
+    var donations = (List<Donation>)ViewBag.Donations!;
+    var paymentMethods = (List<PaymentMethod>)ViewBag.PaymentMethods!;
+    var accountNames = (Dictionary<int, string>)ViewBag.AccountNames!;
+    var adminNames = (Dictionary<string, string>)ViewBag.AdminNames!;
+    var currentUser = (string?)ViewBag.CurrentUser ?? "";
+
+    var approvedDonations = donations.Where(d => d.Status == Donation.Approved).ToList();
+    var pendingDonations = donations.Where(d => d.Status is null).ToList();
+    var rejectedDonations = donations.Where(d => d.Status == Donation.Rejected).ToList();
+}
+
+<div class="page-hero">
+    <div class="container">
+        <h1 class="page-hero__title h2 mb-1">ডোনেশন</h1>
+        <p class="page-hero__sub mb-0">রেজিস্ট্রেশন ফি-এর বাইরে আসা অনুদান — যোগকারী ছাড়া অন্য অ্যাডমিন অনুমোদন করলে অ্যাকাউন্টে যোগ হবে।</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+
+        @if (TempData["Flash"] is string flash)
+        {
+            <div class="alert alert-success rounded-4" role="alert">✓ @flash</div>
+        }
+        @if (TempData["FlashError"] is string flashError)
+        {
+            <div class="alert alert-danger rounded-4" role="alert">✕ @flashError</div>
+        }
+
+        @* সারসংক্ষেপ *@
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.Taka(approvedDonations.Sum(d => d.Amount))</span>
+                    <span class="stat-tile__lbl">অনুমোদিত ডোনেশন · @BengaliText.ToBengaliDigits(approvedDonations.Count)টি</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.Taka(pendingDonations.Sum(d => d.Amount))</span>
+                    <span class="stat-tile__lbl">অপেক্ষমান ডোনেশন · @BengaliText.ToBengaliDigits(pendingDonations.Count)টি</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.ToBengaliDigits(rejectedDonations.Count)টি</span>
+                    <span class="stat-tile__lbl">প্রত্যাখ্যাত ডোনেশন</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.Taka(approvedDonations.Count > 0 ? approvedDonations.Sum(d => d.Amount) / approvedDonations.Count : 0)</span>
+                    <span class="stat-tile__lbl">গড় ডোনেশন (অনুমোদিত)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-panel mb-4">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">নতুন ডোনেশন যোগ করুন</h2>
+            @if (paymentMethods.Count == 0)
+            {
+                <div class="alert alert-warning rounded-4">
+                    কোনো চালু পেমেন্ট অ্যাকাউন্ট নেই — ডোনেশন যোগ করতে অ্যাকাউন্ট নির্বাচন করা বাধ্যতামূলক।
+                    আগে <a asp-controller="Admin" asp-action="PaymentMethods">পেমেন্ট মাধ্যম</a> পাতা থেকে অ্যাকাউন্ট যোগ করুন।
+                </div>
+            }
+            <form asp-controller="Admin" asp-action="SaveDonation" method="post" class="row g-3 align-items-end" novalidate>
+                <div class="col-md-3">
+                    <label class="form-label" for="DonorName">ডোনারের নাম</label>
+                    <input type="text" name="DonorName" id="DonorName" class="form-control" required
+                           placeholder="যেমন: মোঃ রাকিব হাসান" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="Phone">মোবাইল নম্বর</label>
+                    <input type="text" name="Phone" id="Phone" class="form-control" required
+                           inputmode="numeric" maxlength="11" placeholder="01712345678" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="Amount">টাকার পরিমাণ (৳)</label>
+                    <input type="number" name="Amount" id="Amount" class="form-control" required
+                           min="1" step="1" inputmode="numeric" placeholder="1000" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="PaymentMethodId">যে অ্যাকাউন্টে জমা হয়েছে</label>
+                    <select name="PaymentMethodId" id="PaymentMethodId" class="form-select" required>
+                        <option value="">— অ্যাকাউন্ট নির্বাচন করুন —</option>
+                        @foreach (var pm in paymentMethods)
+                        {
+                            <option value="@pm.Id">@pm.MfsName (@pm.AccountNumber)</option>
+                        }
+                    </select>
+                    <div class="form-text">অনুমোদনের পর নির্বাচিত অ্যাকাউন্টের ব্যালেন্সে টাকা যোগ হবে।</div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-green w-100">যোগ করুন</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-panel">
+            <h2 class="h5 fw-bold mb-3" style="color: var(--brand-deep);">ডোনেশন তালিকা</h2>
+            @if (donations.Count == 0)
+            {
+                <p class="mb-0" style="color: var(--brand-muted);">এখনো কোনো ডোনেশন যোগ করা হয়নি।</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col">ডোনারের নাম</th>
+                                <th scope="col">মোবাইল</th>
+                                <th scope="col">টাকার পরিমাণ</th>
+                                <th scope="col">জমা অ্যাকাউন্ট</th>
+                                <th scope="col">যোগ করেছেন</th>
+                                <th scope="col">স্ট্যাটাস</th>
+                                <th scope="col">অনুমোদন/প্রত্যাখ্যান</th>
+                                <th scope="col" class="text-end"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var donation in donations)
+                            {
+                                var canDecide = donation.Status is null && donation.CreatedBy != currentUser;
+                                var decider = donation.ActionBy is null ? null : adminNames.GetValueOrDefault(donation.ActionBy, donation.ActionBy);
+                                <tr>
+                                    <td class="fw-semibold">@donation.DonorName</td>
+                                    <td>@donation.Phone</td>
+                                    <td class="fw-semibold text-nowrap">@BengaliText.Taka(donation.Amount)</td>
+                                    <td>
+                                        @if (donation.PaymentMethodId is int accountId
+                                            && accountNames.TryGetValue(accountId, out var accountName))
+                                        {
+                                            <span class="badge text-bg-success">@accountName</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge text-bg-secondary">অ্যাকাউন্ট নেই</span>
+                                        }
+                                    </td>
+                                    <td>@donation.CreatedByName</td>
+                                    <td>
+                                        <span class="badge @(donation.Status switch
+                                        {
+                                            Donation.Approved => "text-bg-success",
+                                            Donation.Rejected => "text-bg-danger",
+                                            _ => "text-bg-secondary",
+                                        })">@(donation.Status ?? "অপেক্ষমান")</span>
+                                    </td>
+                                    <td>
+                                        @if (decider is not null && donation.ActionAt is DateTime decidedAt)
+                                        {
+                                            <span>@decider</span>
+                                            <div class="small text-muted text-nowrap">@decidedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                        }
+                                        else if (canDecide)
+                                        {
+                                            <form asp-controller="Admin" asp-action="DonationApprove" asp-route-id="@donation.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('@donation.DonorName এর ৳@donation.Amount.ToString("N0") ডোনেশন অনুমোদন করবেন? অ্যাকাউন্টের ব্যালেন্সে যোগ হবে, এটি আর বদলানো যাবে না।');">
+                                                <button type="submit" class="btn btn-sm btn-outline-green">অনুমোদন</button>
+                                            </form>
+                                            <form asp-controller="Admin" asp-action="DonationReject" asp-route-id="@donation.Id" method="post" class="d-inline ms-1"
+                                                  onsubmit="return confirm('@donation.DonorName এর ডোনেশন প্রত্যাখ্যান করবেন? এটি আর বদলানো যাবে না।');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">প্রত্যাখ্যান</button>
+                                            </form>
+                                        }
+                                        else if (donation.CreatedBy == currentUser)
+                                        {
+                                            <span class="small" style="color: var(--brand-muted);">নিজের যোগ করা — সিদ্ধান্ত নয়</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @if (donation.Status != Donation.Approved)
+                                        {
+                                            <form asp-controller="Admin" asp-action="DeleteDonation" asp-route-id="@donation.Id" method="post" class="d-inline"
+                                                  onsubmit="return confirm('@donation.DonorName এর ডোনেশন মুছে ফেলবেন?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">মুছুন</button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</section>

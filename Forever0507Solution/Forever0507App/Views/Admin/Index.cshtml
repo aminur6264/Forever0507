@@ -76,6 +76,31 @@
             </div>
         </div>
 
+        @* ডোনেশন সারসংক্ষেপ *@
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.Taka((decimal)ViewBag.DonationTotal)</span>
+                    <span class="stat-tile__lbl">অনুমোদিত ডোনেশন</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.ToBengaliDigits((int)ViewBag.DonationCount)টি</span>
+                    <span class="stat-tile__lbl">ডোনেশন সংখ্যা</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-tile">
+                    <span class="stat-tile__num">@BengaliText.ToBengaliDigits((int)ViewBag.DonationPendingCount)টি</span>
+                    <span class="stat-tile__lbl">অপেক্ষমান ডোনেশন</span>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3 d-flex align-items-center">
+                <a class="btn btn-outline-green w-100" asp-controller="Admin" asp-action="Donations">সব ডোনেশন দেখুন →</a>
+            </div>
+        </div>
+
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="form-panel h-100">

@@ -305,6 +305,43 @@ using (var scope = app.Services.CreateScope())
             $"ALTER TABLE PageVisits ADD UserId int NULL");
     }
 
+    // Donation records — created here for databases that predate the feature; column
+    // names/types mirror what EF conventions would have generated. PaymentMethodId is a
+    // loose reference (no FK), same style as PageVisits.UserId.
+    await db.Database.ExecuteSqlAsync($"""
+        IF OBJECT_ID(N'Donations', N'U') IS NULL
+        BEGIN
+            CREATE TABLE [Donations] (
+                [Id] int IDENTITY NOT NULL,
+                [DonorName] nvarchar(120) NOT NULL,
+                [Phone] nvarchar(11) NOT NULL,
+                [Amount] decimal(12,2) NOT NULL,
+                [PaymentMethodId] int NULL,
+                [CreatedBy] nvarchar(50) NOT NULL,
+                [CreatedByName] nvarchar(120) NOT NULL,
+                [CreatedAt] datetime2 NOT NULL,
+                [Status] nvarchar(20) NULL,
+                [ActionBy] nvarchar(50) NULL,
+                [ActionAt] datetime2 NULL,
+                CONSTRAINT [PK_Donations] PRIMARY KEY ([Id]));
+        END
+        """);
+
+    // Donation decision columns (added after the feature's first release) — a pending
+    // entry only ever gains the trio together, so checking one covers all three.
+    var hasDonationStatus = await db.Database.SqlQuery<int>(
+        $"SELECT COUNT(*) AS [Value] FROM sys.columns WHERE object_id = OBJECT_ID(N'Donations') AND name = N'Status'")
+        .SingleAsync();
+    if (hasDonationStatus == 0)
+    {
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE Donations ADD Status nvarchar(20) NULL");
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE Donations ADD ActionBy nvarchar(50) NULL");
+        await db.Database.ExecuteSqlAsync(
+            $"ALTER TABLE Donations ADD ActionAt datetime2 NULL");
+    }
+
     await DbSeeder.SeedAsync(db, configEvent);
 
     // From here on the app reads event text from the database, not appsettings.

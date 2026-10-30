@@ -34,6 +34,13 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
             .SumAsync(k => (decimal?)k.Amount) ?? 0;
         ViewBag.KhorochRejectedCount = await db.Khorochs.CountAsync(k => k.Status == Models.Khoroch.Rejected);
 
+        // Donation summary — approved money is the truthful total; pending waits for a decision.
+        ViewBag.DonationTotal = await db.Donations
+            .Where(d => d.Status == Donation.Approved)
+            .SumAsync(d => (decimal?)d.Amount) ?? 0;
+        ViewBag.DonationCount = await db.Donations.CountAsync(d => d.Status == Donation.Approved);
+        ViewBag.DonationPendingCount = await db.Donations.CountAsync(d => d.Status == null);
+
         // District / school tallies — total, approved and pending, busiest first.
         ViewBag.DistrictTally = await db.Registrations.AsNoTracking()
             .GroupBy(r => r.District)
@@ -524,6 +531,139 @@ public class AdminController(AlumniDbContext db, EventOptionsHolder eventHolder,
         if (khoroch is null) return NotFound();
         ViewBag.AdminNames = await AdminNamesAsync();
         return View(khoroch);
+    }
+
+    // ---------------- Donation (ডোনেশন) — money given outside the registration fee ----------------
+
+    // GET /Admin/Donations — summary tiles, add form on top, list with approve/reject below.
+    public async Task<IActionResult> Donations()
+    {
+        ViewBag.Donations = await db.Donations.AsNoTracking()
+            .OrderByDescending(d => d.Id).ToListAsync();
+        // The select offers active accounts; the list's name lookup needs all of them —
+        // a donation may point at a wallet that has since been switched off.
+        var methods = await db.PaymentMethods.AsNoTracking()
+            .OrderBy(p => p.MfsName).ThenBy(p => p.Id).ToListAsync();
+        ViewBag.PaymentMethods = methods.Where(p => p.IsActive).ToList();
+        ViewBag.AccountNames = methods.ToDictionary(p => p.Id, p => $"{p.MfsName} ({p.AccountNumber})");
+        ViewBag.AdminNames = await AdminNamesAsync();
+        ViewBag.CurrentUser = User.Identity!.Name;
+        return View();
+    }
+
+    // POST /Admin/SaveDonation — records the donation as pending; the chosen wallet is
+    // credited only when a different admin approves it. The receiving account is required
+    // so approval always knows where the money goes. No edit: a mistake is removed and re-entered.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveDonation(DonationInputModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["FlashError"] = "ফর্মের তথ্য ঠিক নয় — ডোনারের নাম, সঠিক মোবাইল নম্বর ও টাকার পরিমাণ দিন।";
+            return RedirectToAction(nameof(Donations));
+        }
+        if (model.PaymentMethodId is not int accountId)
+        {
+            TempData["FlashError"] = "যে অ্যাকাউন্টে টাকা জমা হয়েছে সেটি নির্বাচন করুন।";
+            return RedirectToAction(nameof(Donations));
+        }
+
+        var account = await db.PaymentMethods.FirstOrDefaultAsync(p => p.Id == accountId);
+        if (account is null)
+        {
+            TempData["FlashError"] = "নির্বাচিত পেমেন্ট অ্যাকাউন্ট খুঁজে পাওয়া যায়নি।";
+            return RedirectToAction(nameof(Donations));
+        }
+
+        var me = User.Identity!.Name;
+        var meName = await db.AppUsers.AsNoTracking()
+            .Where(u => u.Phone == me)
+            .Select(u => u.FullName)
+            .FirstOrDefaultAsync();
+
+        var donation = new Donation
+        {
+            DonorName = model.DonorName!.Trim(),
+            Phone = model.Phone!.Trim(),
+            Amount = model.Amount!.Value,
+            PaymentMethodId = account.Id,
+            CreatedBy = me!,
+            CreatedByName = !string.IsNullOrWhiteSpace(meName) ? meName.Trim() : me!,
+        };
+        db.Donations.Add(donation);
+        await db.SaveChangesAsync();
+
+        TempData["Flash"] = $"{donation.DonorName} এর ৳{donation.Amount:N0} ডোনেশন যোগ হয়েছে — অন্য অ্যাডমিন অনুমোদন করলে {account.MfsName} ({account.AccountNumber}) অ্যাকাউন্টের ব্যালেন্সে যোগ হবে।";
+        return RedirectToAction(nameof(Donations));
+    }
+
+    // POST /Admin/DonationApprove/5 — pending only; the creator can never decide their own
+    // entry. Approval credits the destination wallet, the same way registration approval does.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DonationApprove(int id)
+        => await DecideDonationAsync(id, Donation.Approved, "অনুমোদিত");
+
+    // POST /Admin/DonationReject/5 — same rules as approval; a rejected entry never touches any balance.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DonationReject(int id)
+        => await DecideDonationAsync(id, Donation.Rejected, "প্রত্যাখ্যাত");
+
+    private async Task<IActionResult> DecideDonationAsync(int id, string status, string verb)
+    {
+        var donation = await db.Donations.FirstOrDefaultAsync(d => d.Id == id);
+        if (donation is null) return NotFound();
+
+        if (donation.CreatedBy == User.Identity!.Name)
+            TempData["FlashError"] = "নিজের যোগ করা ডোনেশন নিজে অনুমোদন বা প্রত্যাখ্যান করা যাবে না।";
+        else if (donation.Status is not null)
+            TempData["FlashError"] = $"{donation.DonorName} এর ডোনেশন আগেই সিদ্ধান্ত হয়ে গেছে।";
+        else
+        {
+            donation.Status = status;
+            donation.ActionBy = User.Identity!.Name;
+            donation.ActionAt = DateTime.UtcNow;
+
+            var creditNote = "";
+            if (status == Donation.Approved)
+            {
+                var account = donation.PaymentMethodId is int accountId
+                    ? await db.PaymentMethods.FirstOrDefaultAsync(p => p.Id == accountId)
+                    : null;
+                creditNote = account is not null
+                    ? $" {account.MfsName} ({account.AccountNumber}) অ্যাকাউন্টের ব্যালেন্সে যোগ হয়েছে।"
+                    : " নির্বাচিত পেমেন্ট অ্যাকাউন্ট পাওয়া যায়নি, তাই ব্যালেন্স যোগ হয়নি।";
+                if (account is not null)
+                    account.Balance += donation.Amount;
+            }
+            await db.SaveChangesAsync();
+            TempData["Flash"] = $"{donation.DonorName} এর ৳{donation.Amount:N0} ডোনেশন {verb} হয়েছে।{creditNote}";
+        }
+        return RedirectToAction(nameof(Donations));
+    }
+
+    // POST /Admin/DeleteDonation/5 — mistakes only: an approved donation is permanent money
+    // and can never be deleted; pending/rejected entries never touched a balance, so no
+    // reversal is needed.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteDonation(int id)
+    {
+        var donation = await db.Donations.FirstOrDefaultAsync(d => d.Id == id);
+        if (donation is null) return NotFound();
+
+        if (donation.Status == Donation.Approved)
+        {
+            TempData["FlashError"] = $"{donation.DonorName} এর ডোনেশন অনুমোদিত — অনুমোদিত ডোনেশন মোছা যাবে না।";
+            return RedirectToAction(nameof(Donations));
+        }
+
+        db.Donations.Remove(donation);
+        await db.SaveChangesAsync();
+        TempData["Flash"] = $"{donation.DonorName} এর ৳{donation.Amount:N0} ডোনেশন মুছে ফেলা হয়েছে।";
+        return RedirectToAction(nameof(Donations));
     }
 
     // POST /Admin/RejectRegistration/5 — one-way: only an undecided (null) registration can be rejected.

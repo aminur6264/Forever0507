@@ -17,6 +17,7 @@ public class AlumniDbContext(DbContextOptions<AlumniDbContext> options) : DbCont
     public DbSet<WhyJoinItem> WhyJoinItems => Set<WhyJoinItem>();
     public DbSet<Khoroch> Khorochs => Set<Khoroch>();
     public DbSet<KhorochItem> KhorochItems => Set<KhorochItem>();
+    public DbSet<Donation> Donations => Set<Donation>();
     public DbSet<GalleryImage> GalleryImages => Set<GalleryImage>();
     public DbSet<IpAddress> IpAddresses => Set<IpAddress>();
     public DbSet<PageVisit> PageVisits => Set<PageVisit>();
